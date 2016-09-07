@@ -21,3 +21,67 @@
  * @author Alexander Afanasyev <http://lasr.cs.ucla.edu/afanasyev/index.html>
  */
 
+#ifndef NDN_ENCODING_BLOCK_TEST_HPP 
+#define NDN_ENCODING_BLOCK_TEST_HPP
+ 
+#include "common.hpp"
+ 
+#include "buffer.hpp"
+#include "tlv.hpp"
+
+namespace boost {
+namespace asio {
+class const_buffer;
+} // namespace asio
+} // namespace boost
+
+namespace ndn {
+
+/** @brief Class representing a single element to construct a buffer wire of TLV format
+ */
+class Block
+{
+public:	
+	class Error : public tlv::Error
+	 {
+	 public:
+	   explicit 
+	   Error(const std::string& what)
+		 : tlv::Error(what)
+	   {
+	   }
+	 };
+
+public: // constructor
+  /** @brief Create an empty Block
+   */
+  Block();
+  /** @brief Create a Block from the raw buffer
+   */
+  explicit
+  Block(const ConstBufferPtr& buffer);
+
+private:
+    shared_ptr<const Buffer> m_buffer; //points to a segment of underlying memory
+	Block *m_next; //points to the next block in the wire
+
+	Buffer::const_iterator m_begin; 
+    Buffer::const_iterator m_end;
+	
+    uint32_t m_size;  //maximum byte size of the buffer
+	uint32_t begin;      //absolute offset in the wire
+    //uint32_t m_type;    //type of this buffer
+
+	//Buffer::const_iterator m_value_begin;
+    //Buffer::const_iterator m_value_end;
+	uint32_t m_usedsize; //used byte size of the buffer
+	
+public:
+	/** @brief Allocate a buffer and create a Block from the raw buffer with @p usedsize bytes used
+   */
+   static Block *
+   BufferAllocate(size_t capacity);
+
+	
+};
+}

@@ -21,48 +21,33 @@
  * @author Alexander Afanasyev <http://lasr.cs.ucla.edu/afanasyev/index.html>
  */
 
-#include "block_test.hpp"
-#include "tlv.hpp"
-
-#include <boost/lexical_cast.hpp>
-#include <boost/asio/buffer.hpp>
+#include "buffer.hpp"
 
 namespace ndn {
 
-#if NDN_CXX_HAVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE  //not to throw any exception.
-static_assert(std::is_nothrow_move_constructible<Block>::value,
-              "Block must be MoveConstructible with noexcept");
+#if NDN_CXX_HAVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE
+static_assert(std::is_nothrow_move_constructible<Buffer>::value,
+              "Buffer must be MoveConstructible with noexcept");
 #endif // NDN_CXX_HAVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE
 
 #if NDN_CXX_HAVE_IS_NOTHROW_MOVE_ASSIGNABLE
-static_assert(std::is_nothrow_move_assignable<Block>::value,
-              "Block must be MoveAssignable with noexcept");
+static_assert(std::is_nothrow_move_assignable<Buffer>::value,
+              "Buffer must be MoveAssignable with noexcept");
 #endif // NDN_CXX_HAVE_IS_NOTHROW_MOVE_ASSIGNABLE
 
-const size_t MAX_SIZE_OF_BLOCK_FROM_STREAM = MAX_NDN_PACKET_SIZE; //从流中来的最大block的size是最大包的size
-
-Block::Block()   //create an empty Block 
+Buffer::Buffer()
 {
 }
 
-Block::Block(const ConstBufferPtr& buffer) 
-  : m_buffer(buffer)
-  , m_begin(m_buffer->begin())
-  , m_end(m_buffer->end())
-  , m_capacity(m_end - m_begin)
+Buffer::Buffer(size_t size)
+  : std::vector<uint8_t>(size, 0)
 {
-    m_next = NULL;
-	m_size = buffer.size();
-	begin = 0;
 }
 
-static Block *
-Block::BufferAllocate(size_t capacity){
-	Buffer* buf = new Buffer(capacity);
-	Block block(buf);
-
-	return block;
+Buffer::Buffer(const void* buf, size_t length)
+  : std::vector<uint8_t>(reinterpret_cast<const uint8_t*>(buf),
+                         reinterpret_cast<const uint8_t*>(buf) + length)
+{
 }
 
-}
-
+} // namespace ndn
