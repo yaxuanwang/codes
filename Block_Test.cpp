@@ -53,7 +53,19 @@ Block::Block(const ConstBufferPtr& buffer)
 {
     m_next = NULL;
 	m_size = buffer.size();
-	begin = 0;
+	m_offset = 0;
+}
+
+Block::Block(const ConstBufferPtr& buffer,   
+             const Buffer::const_iterator& begin, const Buffer::const_iterator& end)
+  : m_buffer(buffer)
+  , m_begin(begin)
+  , m_end(end)
+  , m_capacity(m_end - m_begin)
+{
+	m_next = NULL;
+	m_size = buffer.size();
+	m_offset = 0;
 }
 
 static Block *
