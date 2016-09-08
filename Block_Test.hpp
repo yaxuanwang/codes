@@ -65,24 +65,10 @@ public: // constructor
 	*/
   Block(const ConstBufferPtr& buffer,
 		  const Buffer::const_iterator& begin, const Buffer::const_iterator& end);
-  /** @brief Create a Block from an input stream
+  /** @brief Create a Block from an array with capacity @p maxlength
    */
-  static Block
-  fromStream(std::istream& is);
+  Block(const uint8_t* array, size_t length);
 
-  /** @brief Try to construct block from Buffer               //************
-   *  @param buffer the buffer to construct block from
-   *  @note buffer is passed by value because the constructed block
-   *        takes shared ownership of the buffer
-   *  @param offset offset from beginning of \p buffer to construct Block from
-   *
-   *  This method does not throw upon decoding error.
-   *  This method does not copy the bytes. //****
-   *
-   *  @return true and the Block, if Block is successfully created; otherwise false
-   */
-  static std::tuple<bool, Block>
-  fromBuffer(ConstBufferPtr buffer, size_t offset);
 
 private:
     shared_ptr<const Buffer> m_buffer; //points to a segment of underlying memory
@@ -93,7 +79,7 @@ private:
 	
     uint32_t m_capacity;  //maximum byte size of the buffer
 	uint32_t m_offset;      //absolute offset in the wire
-    //uint32_t m_type;    //type of this buffer
+    uint32_t m_type;    //type of this buffer
 
 	//Buffer::const_iterator m_value_begin;
     //Buffer::const_iterator m_value_end;

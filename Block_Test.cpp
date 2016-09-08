@@ -39,7 +39,7 @@ static_assert(std::is_nothrow_move_assignable<Block>::value,
               "Block must be MoveAssignable with noexcept");
 #endif // NDN_CXX_HAVE_IS_NOTHROW_MOVE_ASSIGNABLE
 
-const size_t MAX_SIZE_OF_BLOCK_FROM_STREAM = MAX_NDN_PACKET_SIZE; //从流中来的最大block的size是最大包的size
+const size_t MAX_SIZE_OF_BLOCK_FROM_STREAM = MAX_NDN_PACKET_SIZE; 
 
 Block::Block()   //create an empty Block 
 {
@@ -68,9 +68,20 @@ Block::Block(const ConstBufferPtr& buffer,
 	m_offset = 0;
 }
 
+Block::Block(const uint8_t* array, size_t length){
+	m_buffer = make_shared<Buffer>(array, array+length);
+	m_begin = m_buffer->begin();
+    m_end = m_buffer->end();
+    m_size = m_end - m_begin;
+	m_capacity = m_size;
+	m_next = NULL;
+}
+
+
+
 static Block *
 Block::BufferAllocate(size_t capacity){
-	Buffer* buf = new Buffer(capacity);
+	ConstBufferPtr buf = new Buffer(capacity);
 	Block block(buf);
 
 	return block;
