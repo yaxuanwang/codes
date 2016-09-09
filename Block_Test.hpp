@@ -69,7 +69,6 @@ public: // constructor
    */
   Block(const uint8_t* array, size_t length);
 
-
 private:
     shared_ptr<const Buffer> m_buffer; //points to a segment of underlying memory
 	Block *m_next; //points to the next block in the wire
@@ -79,17 +78,70 @@ private:
 	
     uint32_t m_capacity;  //maximum byte size of the buffer
 	uint32_t m_offset;      //absolute offset in the wire
-    uint32_t m_type;    //type of this buffer
+    //uint32_t m_type;    //type of this buffer
 
 	//Buffer::const_iterator m_value_begin;
     //Buffer::const_iterator m_value_end;
 	uint32_t m_size; //used byte size of the buffer
 	
-public:
+public: //basic functions
 	/** @brief Allocate a buffer and create a Block from the raw buffer with @p usedsize bytes used
      */
-   static Block *
-   BufferAllocate(size_t capacity);
+    static Block *
+    allocate(size_t capacity);
+	/** @brief Check if the Block is empty
+    */
+    bool
+    hasBuffer();
+	/** @brief Check if the Buffer is empty
+		*/
+    bool
+    empty() const;
+	/** @brief Reset this Block
+     */
+    void
+    reset();
+
+	Buffer::const_iterator
+    begin() const;
+	
+    Buffer::const_iterator
+    end() const;
+
+	const uint8_t*
+    bufferValue() const;
+
+	size_t
+    capacity() const;
+
+	size_t
+    size() const;
+
+	/**
+   * @brief Get underlying buffer
+   */
+    shared_ptr<const Buffer>
+    getBuffer() const;
+	/** @brief Check whether the position @p position is in current block
+    */
+    bool
+    inBlock(size_t position);
+	/** @brief Deallocate this block and the underlying buffer 
+		*/
+    void
+	Deallocate();
+
+
+	
+public: // EqualityComparable concept
+	bool
+	operator==(const Block& other) const;
+	
+	bool
+	operator!=(const Block& other) const;
+	
+public: // ConvertibleToConstBuffer
+	operator boost::asio::const_buffer() const;
 
 	
 };

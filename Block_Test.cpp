@@ -77,14 +77,114 @@ Block::Block(const uint8_t* array, size_t length){
 	m_next = NULL;
 }
 
-
-
 static Block *
-Block::BufferAllocate(size_t capacity){
+Block::allocate(size_t capacity){
 	ConstBufferPtr buf = new Buffer(capacity);
 	Block block(buf);
 
 	return block;
+}
+
+bool
+Block::hasBuffer() const
+{
+  return static_cast<bool>(m_buffer);
+}
+
+bool
+Block::empty() const
+{
+  return m_buffer && (m_size == 0);
+}
+
+void
+Block::reset()
+{
+  m_buffer.reset(); // reset of the shared_ptr
+  m_begin = m_end = Buffer::const_iterator();
+  m_capacity = m_offset = m_size = 0;
+  m_next = NULL;
+}
+
+Buffer::const_iterator
+Block::begin() const
+{
+  if (!hasBuffer())
+    BOOST_THROW_EXCEPTION(Error("Underlying buffer is empty"));
+
+  return m_begin;
+}
+
+Buffer::const_iterator
+Block::end() const
+{
+  if (!hasBuffer())
+    BOOST_THROW_EXCEPTION(Error("Underlying buffer is empty"));
+
+  return m_end;
+}
+
+const uint8_t*
+Block::bufferValue() const
+{
+  if (!hasBuffer())
+    BOOST_THROW_EXCEPTION(Error("Underlying buffer is empty"));
+
+  return &*m_begin; 
+}
+
+size_t
+Block::capacity() const
+{
+  if (hasBuffer()) {   
+    return m_capacity;
+  }
+  else
+    BOOST_THROW_EXCEPTION(Error("Block capacity cannot be determined (undefined block capacity)"));
+}
+
+size_t
+Block::size() const
+{
+  if (hasBuffer()) {   
+    return m_size;
+  }
+  else
+    BOOST_THROW_EXCEPTION(Error("Block used size cannot be determined (undefined block used size)"));
+}
+
+shared_ptr<const Buffer>
+Block::getBuffer() const
+{
+  return m_buffer;
+}
+
+bool
+Block::inBlock(size_t position){
+	if (!hasBuffer())
+				BOOST_THROW_EXCEPTION(Error("underlying buffer is empty"));
+
+	return (m_offset <= position && position < m_offset+ m_size);
+}
+
+void
+Block::deAllocate()
+{
+    //there are still some problems about memory
+	this.reset();
+}
+
+bool
+Block::operator!=(const Block& other) const
+{
+  return !this->operator==(other);
+}
+
+bool
+Block::operator==(const Block& other) const
+{
+  return this->size() == other.size() &&
+         std::equal(this->begin(), this->end(), other.begin());
 }
 
 }
