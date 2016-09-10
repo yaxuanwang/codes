@@ -77,6 +77,16 @@ Block::Block(const uint8_t* array, size_t length){
 	m_next = NULL;
 }
 
+Block::Block(size_t capacity){
+	ConstBufferPtr buf = new Buffer(capacity);
+	m_buffer = buf;
+	m_begin = m_buffer->begin();
+    m_end = m_buffer->end();
+    m_size = m_end - m_begin;
+	m_capacity = m_size;
+	m_next = NULL;
+}
+
 static Block *
 Block::allocate(size_t capacity){
 	ConstBufferPtr buf = new Buffer(capacity);

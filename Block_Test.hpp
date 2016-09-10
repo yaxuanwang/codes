@@ -65,9 +65,12 @@ public: // constructor
 	*/
   Block(const ConstBufferPtr& buffer,
 		  const Buffer::const_iterator& begin, const Buffer::const_iterator& end);
-  /** @brief Create a Block from an array with capacity @p maxlength
+  /** @brief Create a Block from an array with capacity @p length
    */
   Block(const uint8_t* array, size_t length);
+  /** @brief Create a Block and allocate buffer with capacity @p capacity
+   */
+  Block(size_t capacity);
 
 private:
     shared_ptr<const Buffer> m_buffer; //points to a segment of underlying memory
@@ -76,18 +79,18 @@ private:
 	Buffer::const_iterator m_begin; 
     Buffer::const_iterator m_end;
 	
-    uint32_t m_capacity;  //maximum byte size of the buffer
-	uint32_t m_offset;      //absolute offset in the wire
+    size_t m_capacity;  //maximum byte size of the buffer
+	size_t m_offset;      //absolute offset in the wire
     //uint32_t m_type;    //type of this buffer
 
 	//Buffer::const_iterator m_value_begin;
     //Buffer::const_iterator m_value_end;
-	uint32_t m_size; //used byte size of the buffer
+	size_t m_size; //used byte size of the buffer
 	
 public: //basic functions
 	/** @brief Allocate a buffer and create a Block from the raw buffer with @p usedsize bytes used
      */
-    static Block *
+    Block*
     allocate(size_t capacity);
 	/** @brief Check if the Block is empty
     */
@@ -129,7 +132,7 @@ public: //basic functions
 	/** @brief Deallocate this block and the underlying buffer 
 		*/
     void
-	Deallocate();
+	deAllocate();
 
 
 	

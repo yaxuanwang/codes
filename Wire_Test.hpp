@@ -50,14 +50,15 @@ private:
     Block *m_end;                    //the last block
 	mutable io_container m_iovec;    //buffer sequence
 	size_t m_count;                  //reference time 
-public:
+
+public: //wire
     /** @brief Check if the Wire is empty
     */
     bool
     hasWire();
 	/** @brief Increase a reference to current wire
 	 */
-	Wire*
+	shared_ptr<Wire>
 	copy();
 	/** @brief Return current offset in this wire
 	 */
@@ -91,9 +92,40 @@ public: //iovec
 	finalize(); 
 	/** @brief linerize the wire into a single buffer  
 	 */
-    uint8_t *
+    shared_ptr<Buffer>
 	getBuffer();
-		
+	/** @brief check if there is element in iovec  
+	 */
+    bool
+	hasIovec();
+
+public: //operate the wire
+    /** @brief Expand the wire with a new block adding to the end with capacity @p allocationSize  
+     *  Defualt size is 2048
+     */
+	void
+    expand(size_t allocationSize = 2048);
+	/** @brief Expand the wire when current capacity is not enough  
+     */
+	void
+	expendIfNeeded();
+	/** @brief Write a `uint8_t` to the current position, allocating as necessary  
+     */
+    void 
+	writeUint8(uint8_t value);
+	/** @brief Write a `uint16_t` to the current position, allocating as necessary  
+     */
+    void 
+	writeUint16(uint16_t value);
+	/** @brief Write a `uint32_t` to the current position, allocating as necessary  
+     */
+    void 
+	writeUint32(uint32_t value);
+	/** @brief Write a `uint64_t` to the current position, allocating as necessary  
+     */
+    void 
+	writeUint64(uint64_t value);
+
 	
 	
 
