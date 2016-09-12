@@ -87,7 +87,7 @@ Block::Block(size_t capacity){
 	m_next = NULL;
 }
 
-static Block *
+Block*
 Block::allocate(size_t capacity){
 	ConstBufferPtr buf = new Buffer(capacity);
 	Block block(buf);

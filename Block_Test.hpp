@@ -73,33 +73,36 @@ public: // constructor
   Block(size_t capacity);
 
 private:
-    shared_ptr<const Buffer> m_buffer; //points to a segment of underlying memory
-	Block *m_next; //points to the next block in the wire
+    shared_ptr<const Buffer> m_buffer;      //points to a segment of underlying memory
+	Block *m_next;                          //points to the next block in the wire
 
 	Buffer::const_iterator m_begin; 
     Buffer::const_iterator m_end;
 	
-    size_t m_capacity;  //maximum byte size of the buffer
-	size_t m_offset;      //absolute offset in the wire
-    //uint32_t m_type;    //type of this buffer
+    size_t m_capacity;                      //maximum byte size of the buffer
+	size_t m_offset;                        //absolute offset in the wire
+    //uint32_t m_type;                      //type of this buffer
 
 	//Buffer::const_iterator m_value_begin;
     //Buffer::const_iterator m_value_end;
-	size_t m_size; //used byte size of the buffer
+	size_t m_size;                          //used byte size of the buffer
 	
 public: //basic functions
 	/** @brief Allocate a buffer and create a Block from the raw buffer with @p usedsize bytes used
      */
     Block*
     allocate(size_t capacity);
+
 	/** @brief Check if the Block is empty
-    */
+     */
     bool
     hasBuffer();
+
 	/** @brief Check if the Buffer is empty
-		*/
+	 */
     bool
     empty() const;
+
 	/** @brief Reset this Block
      */
     void
@@ -120,21 +123,20 @@ public: //basic functions
 	size_t
     size() const;
 
-	/**
-   * @brief Get underlying buffer
-   */
+	/** @brief Get underlying buffer
+     */
     shared_ptr<const Buffer>
     getBuffer() const;
+
 	/** @brief Check whether the position @p position is in current block
-    */
+     */
     bool
     inBlock(size_t position);
+
 	/** @brief Deallocate this block and the underlying buffer 
-		*/
+	 */
     void
 	deAllocate();
-
-
 	
 public: // EqualityComparable concept
 	bool

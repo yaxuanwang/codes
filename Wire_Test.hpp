@@ -2,6 +2,8 @@
 #define NDN_ENCODING_WIRE_TEST_HPP
  
 #include "Block_Test.hpp"
+#include "common.hpp"
+
 
 namespace boost {
 namespace asio {
@@ -93,14 +95,19 @@ public: //iovec
 	/** @brief linerize the wire into a single buffer  
 	 */
     shared_ptr<Buffer>
-	getBuffer();
+	getBufferFromIovec();
 	/** @brief check if there is element in iovec  
 	 */
     bool
 	hasIovec();
 
 public: //operate the wire
-    /** @brief Expand the wire with a new block adding to the end with capacity @p allocationSize  
+
+	/** @brief Return the remaining bytes space between positon and capacity of current block 
+	 */
+    size_t
+	RemainingInCurrentBlock();
+	/** @brief Expand the wire with a new block adding to the end with capacity @p allocationSize  
      *  Defualt size is 2048
      */
 	void
@@ -108,23 +115,38 @@ public: //operate the wire
 	/** @brief Expand the wire when current capacity is not enough  
      */
 	void
-	expendIfNeeded();
+	expandIfNeeded();
+	/** @brief Check if there are @p length bytes left in a single block's contiguous underlying memory.
+	 *   If not, and the remaining buffer space is small, we will finalize it and allocate a new block.
+	 */
+    void
+    Reserve(size_t length);
 	/** @brief Write a `uint8_t` to the current position, allocating as necessary  
      */
-    void 
+    size_t 
 	writeUint8(uint8_t value);
 	/** @brief Write a `uint16_t` to the current position, allocating as necessary  
      */
-    void 
+    size_t 
 	writeUint16(uint16_t value);
 	/** @brief Write a `uint32_t` to the current position, allocating as necessary  
      */
-    void 
+    size_t
 	writeUint32(uint32_t value);
 	/** @brief Write a `uint64_t` to the current position, allocating as necessary  
      */
-    void 
+    size_t 
 	writeUint64(uint64_t value);
+	/** @brief Write an array with @p length bytes to the current position, allocating new block as necessary  
+     */
+    size_t 
+	appendArray(const uint8_t* array, size_t length);
+	/** @brief Write a buffer with @p length bytes to the current position, allocating new block as necessary  
+     */
+    size_t 
+	appendBuffer(const Buffer* buffer);
+	
+	
 
 	
 	
