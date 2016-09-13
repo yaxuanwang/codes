@@ -260,11 +260,11 @@ Wire::writeUint8(uint8_t value)
 {
     expandIfNeeded();
 	
-    size_t relativePosition = m_position - m_current->m_offset;
-    auto iter = m_begin + relativePosition + 1;
+    size_t relativeOffset = m_position - m_current->m_offset;
+    auto iter = m_begin + relativeOffset + 1;
     *iter = value;
-    if (relativePosition > m_current->m_size) {
-		m_current->m_size = relativePosition;
+    if (relativeOffset > m_current->m_size) {
+		m_current->m_size = relativeOffset;
     }
 	
     m_position++;
@@ -325,14 +325,14 @@ Wire::appendArray(const uint8_t* array, size_t length)
 				remaining = length - offset;
 			}
 	
-			size_t relativePosition = m_position - m_current->begin;
-			auto dest = m_current->m_begin + relativePosition;
+			size_t relativeOffset = m_position - m_current->m_offset;
+			auto dest = m_current->m_begin + relativeOffset;
 			auto src = array + offset;     //notice !!
 			std::copy(src, src + remaining, dest);
 	
-			relativePosition += remaining;
-			if (relativePosition > m_current->m_size) {
-				m_current->m_size = relativePosition;
+			relativeOffset += remaining;
+			if (relativeOffset > m_current->m_size) {
+				m_current->m_size = relativeOffset;
 			}
 	
 			m_position += remaining;
@@ -341,6 +341,53 @@ Wire::appendArray(const uint8_t* array, size_t length)
 	}
 
     return length;
+}
+
+size_t 
+Wire::appendBlock(const Block* block)
+{
+    finalize();
+	// we assume that this is a single block (only when a block is put into a wire it will has next pointer)
+    if (!(block->m_next))
+		BOOST_THROW_EXCEPTION(Error("block does not have next pointer until put into a wire"));
+	m_end->m_next = block;
+	m_end = block;
+	m_end->m_offset = m_position;
+
+    m_current = m_end; 
+	m_position += m_end->m_size;
+	m_capacity += m_end->m_capacity;
+
+	return m_end->m_size;
+}
+
+uint8_t 
+Wire::readUint8(size_t position)
+{
+    if(m_capacity >position) {
+		Block *block = m_begin;
+		while(block && !block->inBlock(position)){
+			 block = block->m_next;
+        }
+        size_t relativeOffset = position - block->m_offset;
+        return *(block->m_begin + relativeOffset);
+	}
+	else
+		BOOST_THROW_EXCEPTION(Error("could not find the illegal position"));
+}
+
+shared_ptr<Buffer>
+Wire::getBuffer()
+{
+    OBufferStream os;
+	size_t totalSize = 0;
+    Block *block = m_begin;
+    while (block) {
+        totalSize += block->size();
+		os.write(reinterpret_cast<const char*>(block->bufferValue()), block->size());
+        block = block->next;
+    }
+    return os.buf();
 }
 
 

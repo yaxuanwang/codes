@@ -137,20 +137,35 @@ public: //operate the wire
      */
     size_t 
 	writeUint64(uint64_t value);
-	/** @brief Write an array with @p length bytes to the current position, allocating new block as necessary  
+	/** @brief Append an array with @p length bytes to the current position, allocating new block as necessary
+	 *   return the size of the appended array
      */
     size_t 
 	appendArray(const uint8_t* array, size_t length);
-	/** @brief Write a buffer with @p length bytes to the current position, allocating new block as necessary  
+	/** @brief Append a block to the current position (this will call finalize and throw buffer after current position)
+	 *   return the size of the appended block
      */
     size_t 
-	appendBuffer(const Buffer* buffer);
+	appendBlock(const Block* block);
+	/** @brief Insert a block to the current position (this will throw data in current block after current position)
+	 */
+    size_t 
+	insertBlock(const Block* block); //complicated
+	/** @brief Append a wire to the current position (not decided yet)
+     */
+    size_t 
+	appendWire(const Wire* wire);
+	/** @brief read the `uint8_t` in @p position position 
+     */
+    uint8_t 
+	readUint8(size_t position);
+	/** @brief From logical continuous wire create a physical continuous memory buffer
+	 *   return the shared pointer of this underlying buffer
+     */
+	shared_ptr<Buffer>
+	getBuffer();
 	
 	
-
-	
-	
-
 };
 
 }
