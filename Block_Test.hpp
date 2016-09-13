@@ -42,15 +42,15 @@ namespace ndn {
 class Block
 {
 public:	
-	class Error : public tlv::Error
-	 {
-	 public:
-	   explicit 
-	   Error(const std::string& what)
-		 : tlv::Error(what)
-	   {
-	   }
-	 };
+  class Error : public tlv::Error
+  {
+   public:
+	  explicit 
+	  Error(const std::string& what)
+		: tlv::Error(what)
+	  {
+	  }
+  };
 
 public: // constructor
   /** @brief Create an empty Block

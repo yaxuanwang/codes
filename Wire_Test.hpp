@@ -31,9 +31,8 @@ public:
 	typedef std::vector<shared_ptr<Buffer>>     io_container;
 	typedef io_container::iterator              io_iterator;
     typedef io_container::const_iterator        io_const_iterator;
-
-	typedef shared_ptr<const Wire>              ConstWirePtr;
-    typedef shared_ptr<Wire>                    WirePtr;
+	
+	typedef std::vector<Block>                  element_container;
 	/** @brief Create an empty wire
 	 */
     Wire();
@@ -52,7 +51,9 @@ private:
     Block *m_end;                    //the last block
 	mutable io_container m_iovec;    //buffer sequence
 	size_t m_count;                  //reference time 
-
+    uint32_t m_type;                 //type of this wire
+	mutable element_container m_subBlocks;
+	
 public: //wire
     /** @brief Check if the Wire is empty
     */
@@ -106,7 +107,7 @@ public: //operate the wire
 	/** @brief Return the remaining bytes space between positon and capacity of current block 
 	 */
     size_t
-	RemainingInCurrentBlock();
+	remainingInCurrentBlock();
 	/** @brief Expand the wire with a new block adding to the end with capacity @p allocationSize  
      *  Defualt size is 2048
      */
@@ -120,7 +121,7 @@ public: //operate the wire
 	 *   If not, and the remaining buffer space is small, we will finalize it and allocate a new block.
 	 */
     void
-    Reserve(size_t length);
+    reserve(size_t length);
 	/** @brief Write a `uint8_t` to the current position, allocating as necessary  
      */
     size_t 

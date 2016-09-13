@@ -196,7 +196,7 @@ Wire::getBufferFromIovec() //still some problems here
 }
 
 size_t
-Wire::RemainingInCurrentBlock()
+Wire::remainingInCurrentBlock()
 {
 	size_t remaining = m_current->m_offset + m_current->m_capacity - m_position;
 	if(remaining < 0)
@@ -234,7 +234,7 @@ Wire::expandIfNeeded()
 }
 
 void
-Wire::Reserve(size_t length)
+Wire::reserve(size_t length)
 {
     /*If the current block has a next pointer, then the remaining is from 
 	 *the position to its size. Otherwise it is from the position to the end.
@@ -244,7 +244,9 @@ Wire::Reserve(size_t length)
 	
     if (remaining < length) {
 		// remaining space of this block is small, just finalize it and allocate a new one
-		if (length < 32 && m_current->m_next == NULL) {
+		// need to guarantee the remaining space is enough for T and L 
+		// specific number needs to be considered again
+		if (remaining < 32 && m_current->m_next == NULL) {
 			expand();
 			m_current = m_end;
 			return;
@@ -274,7 +276,7 @@ Wire::writeUint8(uint8_t value)
 size_t 
 Wire::writeUint16(uint16_t value)
 {
-    Reserve(2);
+    reserve(2);
 
     writeUint8(value >> 8);
     writeUint8(value & 0xFF);
@@ -284,7 +286,7 @@ Wire::writeUint16(uint16_t value)
 void 
 Wire::writeUint32(uint32_t value)
 {
-    Reserve(4);
+    reserve(4);
 
     for (int i = sizeof(uint32_t) - 1; i > 0; i--) {
         uint8_t byte = value >> (i * 8) & 0xFF;
@@ -298,7 +300,7 @@ Wire::writeUint32(uint32_t value)
 void 
 Wire::writeUint64(uint64_t value)
 {
-    Reserve(8);
+    reserve(8);
 
     for (int i = sizeof(uint64_t) - 1; i > 0; i--) {
         uint8_t byte = value >> (i * 8) & 0xFF;
@@ -316,7 +318,7 @@ Wire::appendArray(const uint8_t* array, size_t length)
 	
     size_t offset = 0;
     while (offset < length) {
-		size_t remaining = RemainingInCurrentBlock();
+		size_t remaining = remainingInCurrentBlock();
 		if (remaining == 0) {
 			expandIfNeeded();
 		} 
@@ -344,7 +346,7 @@ Wire::appendArray(const uint8_t* array, size_t length)
 }
 
 size_t 
-Wire::appendBlock(const Block* block)
+Wire::appendBlock(const Block& block)
 {
     finalize();
 	// we assume that this is a single block (only when a block is put into a wire it will has next pointer)
