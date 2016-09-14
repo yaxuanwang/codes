@@ -228,6 +228,60 @@ sizeOfNonNegativeInteger(uint64_t varNumber);
 inline size_t
 writeNonNegativeInteger(std::ostream& os, uint64_t varNumber);
 
+/**
+ * @brief Read VAR-NUMBER in NDN-TLV encoding (overload for Wire)
+ *
+ * @param [in]  wire   Wire to be read
+ * @param [in]  begin  Absolute offset of begin in the wire
+ * @param [in]  end    Absolute offset of end in the wire
+ * @param [out] value  Read value
+ *
+ * @throws This call never throws exception
+ *
+ * @return true if number successfully read from input, false otherwise
+ */
+inline bool
+readVarNumber(const Wire& wire, size_t& begin, size_t& end, uint64_t& value);
+
+/**
+ * @brief Read VAR-NUMBER in NDN-TLV encoding
+ *
+ * @throws This call will throw ndn::tlv::Error (aka std::runtime_error) if number cannot be read
+ *
+ * Note that after call finished, begin will point to the first byte after the read VAR-NUMBER
+ */
+inline uint64_t
+readVarNumber(const Wire& wire, size_t& begin, size_t& end);
+
+/**
+ * @brief Read TLV Type (overload for Wire)
+ *
+ * @param [in]  wire   Wire to be read
+ * @param [in]  begin  Absolute offset of begin in the wire
+ * @param [in]  end    Absolute offset of end in the wire
+ * @param [out] type   Read type number
+ *
+ * @throws This call never throws exception
+ *
+ * This call is largely equivalent to tlv::readVarNumber, but exception will be thrown if type
+ * is larger than 2^32-1 (type in this library is implemented as uint32_t)
+ */
+inline bool
+readType(const Wire& wire, size_t& begin, size_t& end, uint32_t& type);
+
+/**
+ * @brief Read TLV Type
+ *
+ * @throws This call will throw ndn::tlv::Error (aka std::runtime_error) if number cannot be read
+ *
+ * This call is largely equivalent to tlv::readVarNumber, but exception will be thrown if type
+ * is larger than 2^32-1 (type in this library is implemented as uint32_t)
+ */
+inline uint32_t
+readType(const Wire& wire, size_t& begin, size_t& end);
+
+
+
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
@@ -578,6 +632,108 @@ writeNonNegativeInteger(std::ostream& os, uint64_t varNumber)
     os.write(reinterpret_cast<const char*>(&value), 8);
     return 8;
   }
+}
+
+inline bool
+readVarNumber(const Wire& wire, size_t& begin, size_t& end, uint64_t& value)
+{
+  if (begin == end)
+	return false;
+	
+  uint8_t firstOctet = wire.readUint8(begin);
+  ++begin;
+  if (firstOctet < 253)
+	{
+	  value = firstOctet;
+	}
+  else if (firstOctet == 253)
+	{
+	  value = 0;
+	  size_t count = 0;
+	  uint8_t tmp = 0;
+	  for (; begin != end && count < 2; ++count)
+		{
+          tmp = wire.readUint8(begin);  //read the next byte
+		  value = ((value << 8) | tmp); 
+		  begin++;
+		}
+	
+	  if (count != 2)
+		return false;
+	}
+  else if (firstOctet == 254)
+	{
+	  value = 0;
+	  size_t count = 0;
+	  uint8_t tmp = 0;
+	  for (; begin != end && count < 4; ++count)
+	  {
+		tmp = wire.readUint8(begin);  //read the next byte
+	    value = ((value << 8) | tmp);
+		begin++;
+	  }
+	
+	  if (count != 4)
+		return false;
+	}
+  else // if (firstOctet == 255)
+	{
+	  value = 0;
+	  size_t count = 0;
+	  uint8_t tmp = 0;
+	  for (; begin != end && count < 8; ++count)
+		{
+		  tmp = wire.readUint8(begin);  //read the next byte
+		  value = ((value << 8) | tmp);
+		  begin++;
+		}
+	
+	  if (count != 8)
+		return false;
+	}
+	
+  return true;
+
+}
+
+inline uint64_t
+readVarNumber(const Wire& wire, size_t& begin, size_t& end)
+{
+  if (begin == end)
+    BOOST_THROW_EXCEPTION(Error("Empty buffer during TLV processing"));
+
+  uint64_t value;
+  bool isOk = readVarNumber(wire, begin, end, value);
+  if (!isOk)
+    BOOST_THROW_EXCEPTION(Error("Insufficient data during TLV processing"));
+
+  return value;
+}
+
+inline bool
+readType(const Wire& wire, size_t& begin, size_t& end, uint32_t& type)
+{
+  uint64_t number = 0;
+  bool isOk = readVarNumber(wire, begin, end, number);
+  if (!isOk || number > std::numeric_limits<uint32_t>::max())
+    {
+      return false;
+    }
+
+  type = static_cast<uint32_t>(number);
+  return true;
+}
+
+inline uint32_t
+readType(const Wire& wire, size_t& begin, size_t& end)
+{
+  uint64_t type = readVarNumber(wire, begin, end);
+  if (type > std::numeric_limits<uint32_t>::max())
+    {
+      BOOST_THROW_EXCEPTION(Error("TLV type code exceeds allowed maximum"));
+    }
+
+  return static_cast<uint32_t>(type);
 }
 
 

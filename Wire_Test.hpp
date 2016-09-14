@@ -32,7 +32,7 @@ public:
 	typedef io_container::iterator              io_iterator;
     typedef io_container::const_iterator        io_const_iterator;
 	
-	typedef std::vector<Block>                  element_container;
+	typedef std::vector<Wire>                   element_container;
 	/** @brief Create an empty wire
 	 */
     Wire();
@@ -52,7 +52,7 @@ private:
 	mutable io_container m_iovec;    //buffer sequence
 	size_t m_count;                  //reference time 
     uint32_t m_type;                 //type of this wire
-	mutable element_container m_subBlocks;
+	mutable element_container m_subWires;
 	
 public: //wire
     /** @brief Check if the Wire is empty
@@ -147,12 +147,13 @@ public: //operate the wire
 	 *   return the size of the appended block
      */
     size_t 
-	appendBlock(const Block* block);
+	appendBlock(const Block& block);
 	/** @brief Insert a block to the current position (this will throw data in current block after current position)
 	 */
     size_t 
 	insertBlock(const Block* block); //complicated
-	/** @brief Append a wire to the current position (not decided yet)
+	/** @brief Append a wire @p wire to the current position (not decided yet)
+	 *   this function will combine two wire together into a longer one
      */
     size_t 
 	appendWire(const Wire* wire);

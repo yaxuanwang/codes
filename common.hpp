@@ -28,7 +28,7 @@
 #ifndef NDN_COMMON_HPP
 #define NDN_COMMON_HPP
 
-#include "ndn-cxx-config.hpp"
+//#include "ndn-cxx-config.hpp"
 
 // ndn-cxx specific macros declared in this and other headers must have NDN_CXX_ prefix
 // to avoid conflicts with other projects that include ndn-cxx headers.
@@ -43,6 +43,7 @@
 #define NDN_CXX_PUBLIC_WITH_TESTS_ELSE_PRIVATE private
 #define NDN_CXX_PROTECTED_WITH_TESTS_ELSE_PRIVATE private
 #endif
+
 
 // require C++11
 #if __cplusplus < 201103L && !defined(__GXX_EXPERIMENTAL_CXX0X__)
