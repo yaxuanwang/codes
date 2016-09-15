@@ -110,6 +110,31 @@ Wire::setPositon(size_t position)
     m_position = position;
 }
 
+Buffer*
+Wire::findPosition(Buffer::const_iterator& begin, size_t position)
+{
+    if (!hasWire())
+		BOOST_THROW_EXCEPTION(Error("Wire is empty"));
+
+	Block *block = m_begin;
+	if(position <= size()) {
+	    // Is the new position within the current memory block?
+        if (m_current->inBlock(position)) {
+            // we're ok, new position is in this buffer, we're done :)
+        } 
+		else {
+            // we need to find the right buffer
+            while (!block->inBlock(position)) {
+                block = block->m_next;
+            }
+        }
+    }
+	
+	size_t relativeOffset = position - block->m_offset;
+	begin = m_begin + relativeOffset;
+	return block->m_buffer;
+}
+
 void 
 Wire::setIovec()
 {
@@ -263,7 +288,7 @@ Wire::writeUint8(uint8_t value)
     expandIfNeeded();
 	
     size_t relativeOffset = m_position - m_current->m_offset;
-    auto iter = m_begin + relativeOffset + 1;
+    auto iter = m_current->m_begin + relativeOffset + 1;
     *iter = value;
     if (relativeOffset > m_current->m_size) {
 		m_current->m_size = relativeOffset;
@@ -390,6 +415,57 @@ Wire::getBuffer()
         block = block->next;
     }
     return os.buf();
+}
+
+void
+Wire::parse() const
+{
+	if (!m_subWires.empty() || size() == 0)	//there have been some wires in the container
+		return;
+	
+	size_t begin = 0;
+	size_t end = size();
+	
+	while (begin != end)
+	{
+	  size_t element_begin = begin;
+	  Buffer::const_iterator tmp_begin;
+	
+	  uint32_t type = tlv::readType(this, begin, end);
+	  uint64_t length = tlv::readVarNumber(this, begin, end);
+	
+	  if (length > static_cast<uint64_t>(end - begin))
+	  {
+		m_subWires.clear();				//********************
+		BOOST_THROW_EXCEPTION(tlv::Error("TLV length exceeds buffer length"));
+	  }
+	  size_t element_end = begin + length;
+	  Buffer::const_iterator tmp_end;
+	  Block* beginBlock = findPosition(tmp_begin, element_begin);
+	  Block* endBlock = findPosition(tmp_end, element_end);
+	  //if subwire's begin and subwire's end are in the same block(underlying buffer is consecutive)
+	  if(beginBlock = endBlock)
+      {
+        Block* first = Block(beginBlock->m_buffer, tmp_begin, tmp_end);
+		m_subWires.push_back(Wire(first)); 
+	  }
+	  else{
+	  	Block* first = Block(beginBlock->m_buffer, tmp_begin, tmp_end);
+	  	Wire wire = Wire(first);
+		Block* block= beginBlock->m_next;
+		while(block != endBlock)
+		{ 
+		   wire.appendBlock(Block(block->m_buffer, block->m_begin, block->m_end)); 
+		   block = block->m_next;
+		}
+		wire.appendBlock(Block(block->m_buffer, block->m_begin, tmp_end));
+		m_subWires.push_back(wire);
+	  }
+	  begin = element_end;
+		  // don't do recursive parsing, just the top level
+	}
+}
+
 }
 
 

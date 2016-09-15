@@ -63,7 +63,7 @@ public: // constructor
   /** @brief Create a Block from a buffer, directly specifying boundaries
 	*		   of the block within the buffer
 	*/
-  Block(const ConstBufferPtr& buffer,
+  Block(BufferPtr& buffer,
 		  const Buffer::const_iterator& begin, const Buffer::const_iterator& end);
   /** @brief Create a Block from an array with capacity @p length
    */

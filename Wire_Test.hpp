@@ -33,15 +33,25 @@ public:
     typedef io_container::const_iterator        io_const_iterator;
 	
 	typedef std::vector<Wire>                   element_container;
+	
 	/** @brief Create an empty wire
 	 */
     Wire();
+	
 	/** @brief Create the first block in wire with capacity @p capacity
 	 */
 	Wire(size_t capacity);
+	
 	/** @brief Create a wire with the fisrt block @p block
 	 */
 	Wire(const Block *block);
+
+	/** @brief Create a wire with the fisrt block whose buffer is @p buffer
+	 *  @param begin the begin of data in this buffer
+	 *  @param begin the end of data in this buffer
+	 */
+	Wire(BufferPtr& buffer, Buffer::const_iterator begin, Buffer::const_iterator end);
+	
 private:
 	size_t m_position;               //absolute offset in this wire
     size_t m_capacity;               //total maximum byte size of this wire
@@ -59,113 +69,161 @@ public: //wire
     */
     bool
     hasWire();
+	
 	/** @brief Increase a reference to current wire
 	 */
 	shared_ptr<Wire>
 	copy();
+	
 	/** @brief Return current offset in this wire
 	 */
 	size_t 
 	position();
+	
 	/** @brief Return current capacity of this wire
 	 */
 	size_t 
 	capacity();
+	
 	/** @brief Return current used byte size of this wire
 	 */
 	size_t 
 	size();
-	/** @brief set the offset to a specific positon
+	
+	/** @brief Set the offset to a specific positon
 	 */
 	void
 	setPositon(size_t position);
+	/** @brief Find the block and buffer which @p position offset lies, set the iterator to this position
+	 *  Return the pointer to this block
+	 */
+	Block*
+	findPosition(Buffer::const_iterator& begin, size_t position);
+		
 public: //iovec
 	/** @brief put buffers pointed by blocks into a buffer sequence iovec
 	 *  All buffers in blocks in this wire will not be copied or modified. The iovec is read-only for doing a gathering write.
 	 */
 	void 
 	setIovec();
+	
 	/** @brief count the number of blocks in this wire
 	 */
 	size_t
 	countBlock();
+	
     /** @brief set the size of this wire to the current postion and throw ohters  
 	 */
 	void 
 	finalize(); 
+	
 	/** @brief linerize the wire into a single buffer  
 	 */
     shared_ptr<Buffer>
 	getBufferFromIovec();
+	
 	/** @brief check if there is element in iovec  
 	 */
     bool
 	hasIovec();
 
 public: //operate the wire
-
-	/** @brief Return the remaining bytes space between positon and capacity of current block 
+    /** @brief Return the remaining bytes space between positon and capacity of current block 
 	 */
     size_t
 	remainingInCurrentBlock();
+	
 	/** @brief Expand the wire with a new block adding to the end with capacity @p allocationSize  
      *  Defualt size is 2048
      */
 	void
     expand(size_t allocationSize = 2048);
+	
 	/** @brief Expand the wire when current capacity is not enough  
      */
 	void
 	expandIfNeeded();
+	
 	/** @brief Check if there are @p length bytes left in a single block's contiguous underlying memory.
-	 *   If not, and the remaining buffer space is small, we will finalize it and allocate a new block.
+	 *  If not, and the remaining buffer space is small, we will finalize it and allocate a new block.
 	 */
     void
     reserve(size_t length);
+	
 	/** @brief Write a `uint8_t` to the current position, allocating as necessary  
      */
     size_t 
 	writeUint8(uint8_t value);
+	
 	/** @brief Write a `uint16_t` to the current position, allocating as necessary  
      */
     size_t 
 	writeUint16(uint16_t value);
+	
 	/** @brief Write a `uint32_t` to the current position, allocating as necessary  
      */
     size_t
 	writeUint32(uint32_t value);
+	
 	/** @brief Write a `uint64_t` to the current position, allocating as necessary  
      */
     size_t 
 	writeUint64(uint64_t value);
+	
 	/** @brief Append an array with @p length bytes to the current position, allocating new block as necessary
-	 *   return the size of the appended array
+	 *  Return the size of the appended array
      */
     size_t 
 	appendArray(const uint8_t* array, size_t length);
-	/** @brief Append a block to the current position (this will call finalize and throw buffer after current position)
-	 *   return the size of the appended block
+	
+	/** @brief Append a block to the current position 
+	 *  This will call finalize and throw buffer after current position
+	 *  Return the size of the appended block
      */
     size_t 
 	appendBlock(const Block& block);
-	/** @brief Insert a block to the current position (this will throw data in current block after current position)
+	
+	/** @brief Insert a block to the current position 
+	 *  This will throw data in current block after current position
 	 */
     size_t 
-	insertBlock(const Block* block); //complicated
+	insertBlock(const Block* block); //complicated 
+
 	/** @brief Append a wire @p wire to the current position (not decided yet)
-	 *   this function will combine two wire together into a longer one
+	 *  This function will combine two wire together into a longer one
      */
     size_t 
 	appendWire(const Wire* wire);
+
 	/** @brief read the `uint8_t` in @p position position 
      */
     uint8_t 
 	readUint8(size_t position);
+
 	/** @brief From logical continuous wire create a physical continuous memory buffer
-	 *   return the shared pointer of this underlying buffer
+	 *  Return the shared pointer of this underlying buffer
      */
 	shared_ptr<Buffer>
 	getBuffer();
+
+public: //subwires
+    /** @brief Parse this wire into subwires
+     *
+     *  This method will not copy or modify any data.  It simply
+     *  parses contents of the wire into subwires in the format of TLVs
+     *  It only parses the top level TLVs, do not do recursive parsing
+     */
+	void
+	creatSubwires(size_t begin, size_t end);
+
+	/** @brief Parse this wire into subwires
+     *
+     *  This method will not copy or modify any data.  It simply
+     *  parses contents of the wire into subwires in the format of TLVs
+     *  It only parses the top level TLVs, do not do recursive parsing
+     */
+    void
+    parse() const;
 	
 	
 };
