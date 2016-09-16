@@ -21,8 +21,8 @@
  * @author Alexander Afanasyev <http://lasr.cs.ucla.edu/afanasyev/index.html>
  */
 
-#include "Encoder_Test.hpp"
-#include "Endian.hpp"
+#include "encoder_Test.hpp"
+#include "endian.hpp"
 
 namespace ndn {
 namespace encoding {

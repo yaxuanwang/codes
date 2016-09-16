@@ -24,7 +24,7 @@
 #ifndef NDN_ENCODING_WIRE_TEST_HPP 
 #define NDN_ENCODING_WIRE_TEST_HPP
  
-#include "Block_Test.hpp"
+#include "block_test.hpp"
 #include "common.hpp"
 
 
@@ -125,10 +125,6 @@ public: //wire
    */
   Block*
   findPosition(Buffer::const_iterator& begin, size_t position);
-  /** @brief Reset wire buffer but keep sub elements (if any)
-   */
-  void
-  resetWire();
 		
 public: //iovec
   /** @brief put buffers pointed by blocks into a buffer sequence iovec

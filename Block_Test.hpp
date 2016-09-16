@@ -27,7 +27,7 @@
 #include "common.hpp"
  
 #include "buffer.hpp"
-#include "Tlv_Test.hpp"
+#include "tlv_test.hpp"
 
 namespace boost {
 namespace asio {
@@ -44,10 +44,10 @@ class Block
 public:	
   class Error : public tlv::Error
   {
-   public:
-	  explicit 
-	  Error(const std::string& what)
-		: tlv::Error(what)
+  public:
+	explicit 
+	Error(const std::string& what)
+	  : tlv::Error(what)
 	  {
 	  }
   };
@@ -56,98 +56,97 @@ public: // constructor
   /** @brief Create an empty Block
    */
   Block();
+
   /** @brief Create a Block from the raw buffer
    */
   explicit
   Block(const ConstBufferPtr& buffer);
   /** @brief Create a Block from a buffer, directly specifying boundaries
-	*		   of the block within the buffer
-	*/
+   *		   of the block within the buffer
+   */
   Block(BufferPtr& buffer,
 		  const Buffer::const_iterator& begin, const Buffer::const_iterator& end);
+
   /** @brief Create a Block from an array with capacity @p length
    */
   Block(const uint8_t* array, size_t length);
+
   /** @brief Create a Block and allocate buffer with capacity @p capacity
    */
   Block(size_t capacity);
 
 private:
-    shared_ptr<const Buffer> m_buffer;      //points to a segment of underlying memory
-	Block *m_next;                          //points to the next block in the wire
+  shared_ptr<const Buffer> m_buffer;      //points to a segment of underlying memory
+  Block *m_next;                          //points to the next block in the wire
 
-	Buffer::const_iterator m_begin; 
-    Buffer::const_iterator m_end;
+  Buffer::const_iterator m_begin; 
+  Buffer::const_iterator m_end;
 	
-    size_t m_capacity;                      //maximum byte size of the buffer
-	size_t m_offset;                        //absolute offset in the wire
-    //uint32_t m_type;                      //type of this buffer
-
-	//Buffer::const_iterator m_value_begin;
-    //Buffer::const_iterator m_value_end;
-	size_t m_size;                          //used byte size of the buffer
+  size_t m_capacity;                      //maximum byte size of the buffer
+  size_t m_offset;                        //absolute offset in the wire
+  //uint32_t m_type;                      //type of this buffer
+  size_t m_size;                          //used byte size of the buffer
 	
 public: //basic functions
-	/** @brief Allocate a buffer and create a Block from the raw buffer with @p usedsize bytes used
-     */
-    Block*
-    allocate(size_t capacity);
+  /** @brief Allocate a buffer and create a Block from the raw buffer with @p usedsize bytes used
+   */
+  Block*
+  allocate(size_t capacity);
 
-	/** @brief Check if the Block is empty
-     */
-    bool
-    hasBuffer();
+  /** @brief Check if the Block is empty
+   */
+  bool
+  hasBuffer();
 
-	/** @brief Check if the Buffer is empty
-	 */
-    bool
-    empty() const;
+  /** @brief Check if the Buffer is empty
+   */
+  bool
+  empty() const;
 
-	/** @brief Reset this Block
-     */
-    void
-    reset();
+  /** @brief Reset this Block
+   */
+  void
+  reset();
 
-	Buffer::const_iterator
-    begin() const;
+  Buffer::const_iterator
+  begin() const;
 	
-    Buffer::const_iterator
-    end() const;
+  Buffer::const_iterator
+  end() const;
 
-	const uint8_t*
-    bufferValue() const;
+  const uint8_t*
+  bufferValue() const;
 
-	size_t
-    capacity() const;
+  size_t
+  capacity() const;
 
-	size_t
-    size() const;
+  size_t
+  size() const;
 
-	/** @brief Get underlying buffer
-     */
-    shared_ptr<const Buffer>
-    getBuffer() const;
+  /** @brief Get underlying buffer
+   */
+  shared_ptr<const Buffer>
+  getBuffer() const;
 
-	/** @brief Check whether the position @p position is in current block
-     */
-    bool
-    inBlock(size_t position);
+  /** @brief Check whether the position @p position is in current block
+   */
+  bool
+  inBlock(size_t position);
 
-	/** @brief Deallocate this block and the underlying buffer 
-	 */
-    void
-	deAllocate();
+  /** @brief Deallocate this block and the underlying buffer 
+   */
+  void
+  deAllocate();
 	
 public: // EqualityComparable concept
-	bool
-	operator==(const Block& other) const;
+  bool
+  operator==(const Block& other) const;
 	
-	bool
-	operator!=(const Block& other) const;
+  bool
+  operator!=(const Block& other) const;
 	
 public: // ConvertibleToConstBuffer
-	operator boost::asio::const_buffer() const;
+  operator boost::asio::const_buffer() const;
 
-	
 };
 }

@@ -21,8 +21,8 @@
  * @author Alexander Afanasyev <http://lasr.cs.ucla.edu/afanasyev/index.html>
  */
 
-#include "Wire_Test.hpp"
-#include "Buffer-stream.hpp"
+#include "wire_test.hpp"
+#include "buffer-stream.hpp"
 
 namespace ndn {
 
@@ -128,7 +128,7 @@ Wire::setPositon(size_t position)
         block = block->m_next;
       }
       m_current = block;
-    }
+	}
   }
   m_position = position;
 }
@@ -155,11 +155,6 @@ Wire::findPosition(Buffer::const_iterator& begin, size_t position)
   size_t relativeOffset = position - block->m_offset;
   begin = m_begin + relativeOffset;
   return block;
-}
-
-void
-Wire::resetWire()
-{
 }
 
 void 
@@ -289,7 +284,7 @@ Wire::reserve(size_t length)
   remaining = m_current->m_offset + m_current->m_capacity - m_position;
 	
   if (remaining < length) {
-    // remaining space of this block is small, just finalize it and allocate a new one
+    // if remaining space of this block is small, just finalize it and allocate a new one
     // need to guarantee the remaining space is enough for T and L 
     // specific number needs to be considered again
     if (remaining < 32 && m_current->m_next == NULL) {

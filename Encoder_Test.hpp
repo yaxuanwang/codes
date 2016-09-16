@@ -26,7 +26,7 @@
 #define NDN_ENCODING_ENCODER_TEST_HPP
 
 #include "common.hpp"
-#include "Wire_Test.hpp"
+#include "wire_test.hpp"
 
 namespace ndn {
 namespace encoding {

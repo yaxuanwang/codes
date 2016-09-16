@@ -51,9 +51,9 @@ Block::Block(const ConstBufferPtr& buffer)
   , m_end(m_buffer->end())
   , m_capacity(m_end - m_begin)
 {
-    m_next = NULL;
-	m_size = buffer.size();
-	m_offset = 0;
+  m_next = NULL;
+  m_size = buffer.size();
+  m_offset = 0;
 }
 
 Block::Block(BufferPtr& buffer,   
@@ -63,39 +63,39 @@ Block::Block(BufferPtr& buffer,
   , m_end(end)
   , m_capacity(m_end - m_begin)
 {
-	m_next = NULL;
-	m_size = buffer.size();
-	m_offset = 0;
+  m_next = NULL;
+  m_size = buffer.size();
+  m_offset = 0;
 }
 
 Block::Block(const uint8_t* array, size_t length) 
 {
-	m_buffer = make_shared<Buffer>(array, array+length);
-	m_begin = m_buffer->begin();
-    m_end = m_buffer->end();
-    m_size = m_end - m_begin;
-	m_capacity = m_size;
-	m_next = NULL;
+  m_buffer = make_shared<Buffer>(array, array+length);
+  m_begin = m_buffer->begin();
+  m_end = m_buffer->end();
+  m_size = m_end - m_begin;
+  m_capacity = m_size;
+  m_next = NULL;
 }
 
 Block::Block(size_t capacity)
 {
-	ConstBufferPtr buf = new Buffer(capacity);
-	m_buffer = buf;
-	m_begin = m_buffer->begin();
-    m_end = m_buffer->end();
-    m_size = m_end - m_begin;
-	m_capacity = m_size;
-	m_next = NULL;
+  ConstBufferPtr buf = new Buffer(capacity);
+  m_buffer = buf;
+  m_begin = m_buffer->begin();
+  m_end = m_buffer->end();
+  m_size = m_end - m_begin;
+  m_capacity = m_size;
+  m_next = NULL;
 }
 
 Block*
 Block::allocate(size_t capacity) 
 {
-	ConstBufferPtr buf = new Buffer(capacity);
-	Block block(buf);
+  ConstBufferPtr buf = new Buffer(capacity);
+  Block block(buf);
 
-	return block;
+  return block;
 }
 
 bool
