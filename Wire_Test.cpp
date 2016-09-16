@@ -32,7 +32,7 @@ Wire::Wire(size_t capacity)
 	m_count = 1;
 }
 
-Wire::Wire(const Block *block)
+Wire::Wire(const Block* block)
    :m_begin(block),
 	m_current(m_begin),
 	m_end(m_begin),
@@ -447,11 +447,14 @@ Wire::parse() const
 	  if(beginBlock = endBlock)
       {
         Block* first = Block(beginBlock->m_buffer, tmp_begin, tmp_end);
-		m_subWires.push_back(Wire(first)); 
+		Wire wire = Wire(first);
+		wire.m_type = type;
+		m_subWires.push_back(wire); 
 	  }
 	  else{
 	  	Block* first = Block(beginBlock->m_buffer, tmp_begin, tmp_end);
 	  	Wire wire = Wire(first);
+		wire.m_type = type;
 		Block* block= beginBlock->m_next;
 		while(block != endBlock)
 		{ 
@@ -466,8 +469,49 @@ Wire::parse() const
 	}
 }
 
+const Wire&
+Wire::get(uint32_t type) const
+{
+	element_const_iterator it = this->find(type);
+	 if (it != m_subWires.end())
+	   return *it;
+	
+	 BOOST_THROW_EXCEPTION(Error("(Wire::get) Requested a non-existed type [" +
+								 boost::lexical_cast<std::string>(type) + "] from Wire"));
+}
+
+Wire::element_const_iterator
+Wire::find(uint32_t type) const  
+{
+  return std::find_if(m_subWires.begin(), m_subWires.end(),
+                      [type] (const Block& subBlock) { return subBlock.type() == type; });
+}
+
+const Wire::element_container&
+Wire::elements() const
+{
+  return m_subWires;
+}
+
+Wire::element_const_iterator
+Wire::elements_begin() const
+{
+  return m_subWires.begin();
+}
+
+Wire::element_const_iterator
+Wire::elements_end() const
+{
+  return m_subWires.end();
+}
+
+size_t
+Wire::elements_size() const
+{
+  return m_subWires.size();
+}
+
 }
 
 
-}
 

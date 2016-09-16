@@ -33,6 +33,8 @@ public:
     typedef io_container::const_iterator        io_const_iterator;
 	
 	typedef std::vector<Wire>                   element_container;
+	typedef element_container::iterator         element_iterator;
+    typedef element_container::const_iterator   element_const_iterator;
 	
 	/** @brief Create an empty wire
 	 */
@@ -207,16 +209,7 @@ public: //operate the wire
 	getBuffer();
 
 public: //subwires
-    /** @brief Parse this wire into subwires
-     *
-     *  This method will not copy or modify any data.  It simply
-     *  parses contents of the wire into subwires in the format of TLVs
-     *  It only parses the top level TLVs, do not do recursive parsing
-     */
-	void
-	creatSubwires(size_t begin, size_t end);
-
-	/** @brief Parse this wire into subwires
+   /** @brief Parse this wire into subwires
      *
      *  This method will not copy or modify any data.  It simply
      *  parses contents of the wire into subwires in the format of TLVs
@@ -224,8 +217,31 @@ public: //subwires
      */
     void
     parse() const;
-	
-	
+
+	/** @brief Get the first subelement of the requested type
+     */
+    const Wire&
+    get(uint32_t type) const;
+
+	/** @brief Find the position of first subelement of the requested type
+     */
+	element_const_iterator
+    find(uint32_t type) const;
+
+    /** @brief Get all subelements
+     */
+    const element_container&
+    elements() const;
+
+    element_const_iterator
+    elements_begin() const;
+
+    element_const_iterator
+    elements_end() const;
+
+    size_t
+    elements_size() const;
+		
 };
 
 }

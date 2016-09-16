@@ -56,8 +56,8 @@ Block::Block(const ConstBufferPtr& buffer)
 	m_offset = 0;
 }
 
-Block::Block(const ConstBufferPtr& buffer,   
-             const Buffer::const_iterator& begin, const Buffer::const_iterator& end)
+Block::Block(BufferPtr& buffer,   
+               const Buffer::const_iterator& begin, const Buffer::const_iterator& end)
   : m_buffer(buffer)
   , m_begin(begin)
   , m_end(end)
@@ -171,17 +171,17 @@ Block::getBuffer() const
 
 bool
 Block::inBlock(size_t position){
-	if (!hasBuffer())
-				BOOST_THROW_EXCEPTION(Error("underlying buffer is empty"));
+  if (!hasBuffer())
+	BOOST_THROW_EXCEPTION(Error("underlying buffer is empty"));
 
-	return (m_offset <= position && position < m_offset+ m_size);
+  return (m_offset <= position && position < m_offset+ m_size);
 }
 
 void
 Block::deAllocate()
 {
-    //there are still some problems about memory
-	this.reset();
+  //there are still some problems about memory
+  this.reset();
 }
 
 bool
