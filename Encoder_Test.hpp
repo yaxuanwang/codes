@@ -44,7 +44,11 @@ public:   // common interface between Encoder and Estimator
    * @param firstReserve initial the first buffer size to reserve
    */
   Encoder(size_t firstReserve);
-  
+
+  /**
+   * @brief Create instance of the encoder from an existing @p wire
+   */
+  Encodr(const Wire& wire);
   /**
    * @brief Append a byte
    */
@@ -81,10 +85,15 @@ public:   // common interface between Encoder and Estimator
   size_t
   appendBlock(const Block& block);
   
+  /**
+   * @brief Prepend TLV block @p block
+   */
+  size_t
+  prependBlock(const Block& block);
   
 private:
   //shared_ptr<Wire> m_wire;
-  Wire *m_wire;
+  Wire m_wire;
 
 public: // unique interface to the Encoder
   typedef Buffer::iterator iterator;

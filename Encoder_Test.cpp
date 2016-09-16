@@ -33,19 +33,24 @@ Encoder::Encoder(size_t firstReserve)
 {
 }
 
+Encoder::Encodr(const Wire& wire)
+  : m_wire(wire)
+{
+}
+
 size_t
 Encoder::appendByte(uint8_t value)
 {
-  m_wire->reserve(1);
-  m_wire->writeUint8(value);
+  m_wire.reserve(1);
+  m_wire.writeUint8(value);
   return 1;
 }
 
 size_t
 Encoder::appendByteArray(const uint8_t* array, size_t length)
 {
-  m_wire->reserve(length);
-  m_wire->appendArray(array,length);
+  m_wire.reserve(length);
+  m_wire.appendArray(array,length);
   return length;
 }
 
@@ -109,8 +114,15 @@ Encoder::appendByteArrayBlock(uint32_t type, const uint8_t* array, size_t arrayS
 size_t
 Encoder::appendBlock(const Block& block)
 {
-  size_t length = m_wire.appendBlock(block);
+  size_t length = m_wire->appendBlock(block);
   return length;
+}
+
+size_t
+Encoder::prependBlock(const Block& block)
+{
+	size_t length = m_wire->prependBlock(block);
+	return length;
 }
 
 }
