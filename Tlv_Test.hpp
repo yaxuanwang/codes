@@ -302,37 +302,37 @@ readVarNumber(InputIterator& begin, const InputIterator& end, uint64_t& number)
   uint8_t firstOctet = *begin;
   ++begin;
   if (firstOctet < 253)
-    {
-      number = firstOctet;
-    }
+  {
+    number = firstOctet;
+  }
   else if (firstOctet == 253)
-    {
-      if (end - begin < 2)
-        return false;
+  {
+    if (end - begin < 2)
+      return false;
 
-      uint16_t value = *reinterpret_cast<const uint16_t*>(&*begin);
-      begin += 2;
-      number = be16toh(value);
-    }
+    uint16_t value = *reinterpret_cast<const uint16_t*>(&*begin);
+    begin += 2;
+    number = be16toh(value);
+  }
   else if (firstOctet == 254)
-    {
-      if (end - begin < 4)
-        return false;
+  {
+    if (end - begin < 4)
+      return false;
 
       uint32_t value = *reinterpret_cast<const uint32_t*>(&*begin);
       begin += 4;
       number = be32toh(value);
-    }
+  }
   else // if (firstOctet == 255)
-    {
-      if (end - begin < 8)
-        return false;
+  {
+    if (end - begin < 8)
+      return false;
 
-      uint64_t value = *reinterpret_cast<const uint64_t*>(&*begin);
-      begin += 8;
+    uint64_t value = *reinterpret_cast<const uint64_t*>(&*begin);
+    begin += 8;
 
-      number = be64toh(value);
-    }
+    number = be64toh(value);
+  }
 
   return true;
 }
@@ -344,9 +344,9 @@ readType(InputIterator& begin, const InputIterator& end, uint32_t& type)
   uint64_t number = 0;
   bool isOk = readVarNumber(begin, end, number);
   if (!isOk || number > std::numeric_limits<uint32_t>::max())
-    {
-      return false;
-    }
+  {
+    return false;
+  }
 
   type = static_cast<uint32_t>(number);
   return true;
@@ -378,49 +378,43 @@ readVarNumber<std::istream_iterator<uint8_t>>(std::istream_iterator<uint8_t>& be
 
   uint8_t firstOctet = *begin;
   ++begin;
-  if (firstOctet < 253)
-    {
-      value = firstOctet;
+  if (firstOctet < 253) {
+    value = firstOctet;
+  }
+  else if (firstOctet == 253) {
+    value = 0;
+    size_t count = 0;
+    for (; begin != end && count < 2; ++count) {
+      value = ((value << 8) | *begin); 
+      begin++;
     }
-  else if (firstOctet == 253)
-    {
-      value = 0;
-      size_t count = 0;
-      for (; begin != end && count < 2; ++count)
-        {
-          value = ((value << 8) | *begin); //ÒÆÎ»
-          begin++;
-        }
 
-      if (count != 2)
-        return false;
+    if (count != 2)
+      return false;
+  }
+  else if (firstOctet == 254) {
+    value = 0;
+    size_t count = 0;
+    for (; begin != end && count < 4; ++count) {
+      value = ((value << 8) | *begin);
+      begin++;
     }
-  else if (firstOctet == 254)
-    {
-      value = 0;
-      size_t count = 0;
-      for (; begin != end && count < 4; ++count)
-        {
-          value = ((value << 8) | *begin);
-          begin++;
-        }
 
-      if (count != 4)
-        return false;
-    }
+    if (count != 4)
+      return false;
+  }
   else // if (firstOctet == 255)
-    {
-      value = 0;
-      size_t count = 0;
-      for (; begin != end && count < 8; ++count)
-        {
-          value = ((value << 8) | *begin);
-          begin++;
-        }
-
-      if (count != 8)
-        return false;
+  {
+    value = 0;
+    size_t count = 0;
+    for (; begin != end && count < 8; ++count) {
+      value = ((value << 8) | *begin);
+      begin++;
     }
+
+    if (count != 8)
+      return false;
+  }
 
   return true;
 }
@@ -430,10 +424,9 @@ inline uint32_t
 readType(InputIterator& begin, const InputIterator& end)
 {
   uint64_t type = readVarNumber(begin, end);
-  if (type > std::numeric_limits<uint32_t>::max())
-    {
-      BOOST_THROW_EXCEPTION(Error("TLV type code exceeds allowed maximum"));
-    }
+  if (type > std::numeric_limits<uint32_t>::max()) {
+    BOOST_THROW_EXCEPTION(Error("TLV type code exceeds allowed maximum"));
+  }
 
   return static_cast<uint32_t>(type);
 }
@@ -609,7 +602,6 @@ sizeOfNonNegativeInteger(uint64_t varNumber)
   }
 }
 
-
 inline size_t
 writeNonNegativeInteger(std::ostream& os, uint64_t varNumber)
 {
@@ -637,63 +629,57 @@ writeNonNegativeInteger(std::ostream& os, uint64_t varNumber)
 inline bool
 readVarNumber(const Wire& wire, size_t& begin, size_t& end, uint64_t& value)
 {
+  if(end > wire.size())
+  	end = wire.size();
   if (begin == end)
-	return false;
+    return false;
 	
   uint8_t firstOctet = wire.readUint8(begin);
   ++begin;
-  if (firstOctet < 253)
-	{
-	  value = firstOctet;
-	}
-  else if (firstOctet == 253)
-	{
-	  value = 0;
-	  size_t count = 0;
-	  uint8_t tmp = 0;
-	  for (; begin != end && count < 2; ++count)
-		{
-          tmp = wire.readUint8(begin);  //read the next byte
-		  value = ((value << 8) | tmp); 
-		  begin++;
-		}
+  if (firstOctet < 253) {
+    value = firstOctet;
+  }
+  else if (firstOctet == 253) {
+    value = 0;
+	size_t count = 0;
+	uint8_t tmp = 0;
+	for (; begin != end && count < 2; ++count) {
+      tmp = wire.readUint8(begin);  //read the next byte
+      value = ((value << 8) | tmp); 
+      begin++;
+    }
 	
-	  if (count != 2)
-		return false;
-	}
-  else if (firstOctet == 254)
-	{
-	  value = 0;
-	  size_t count = 0;
-	  uint8_t tmp = 0;
-	  for (; begin != end && count < 4; ++count)
-	  {
-		tmp = wire.readUint8(begin);  //read the next byte
-	    value = ((value << 8) | tmp);
-		begin++;
-	  }
+    if (count != 2)
+      return false;
+  }
+  else if (firstOctet == 254) {
+    value = 0;
+    size_t count = 0;
+    uint8_t tmp = 0;
+    for (; begin != end && count < 4; ++count) {
+      tmp = wire.readUint8(begin);  //read the next byte
+      value = ((value << 8) | tmp);
+      begin++;
+    }
 	
-	  if (count != 4)
-		return false;
-	}
-  else // if (firstOctet == 255)
-	{
-	  value = 0;
-	  size_t count = 0;
-	  uint8_t tmp = 0;
-	  for (; begin != end && count < 8; ++count)
-		{
-		  tmp = wire.readUint8(begin);  //read the next byte
-		  value = ((value << 8) | tmp);
-		  begin++;
-		}
+    if (count != 4)
+      return false;
+  }
+  else // if (firstOctet == 255) {
+    value = 0;
+    size_t count = 0;
+    uint8_t tmp = 0;
+    for (; begin != end && count < 8; ++count) {
+      tmp = wire.readUint8(begin);  //read the next byte
+      value = ((value << 8) | tmp);
+      begin++;
+    }
 	
-	  if (count != 8)
-		return false;
-	}
-	
-  return true;
+    if (count != 8)
+      return false;
+  }
 
+  return true;
 }
 
 inline uint64_t
@@ -715,10 +701,9 @@ readType(const Wire& wire, size_t& begin, size_t& end, uint32_t& type)
 {
   uint64_t number = 0;
   bool isOk = readVarNumber(wire, begin, end, number);
-  if (!isOk || number > std::numeric_limits<uint32_t>::max())
-    {
-      return false;
-    }
+  if (!isOk || number > std::numeric_limits<uint32_t>::max()) {
+    return false;
+  }
 
   type = static_cast<uint32_t>(number);
   return true;
@@ -728,10 +713,9 @@ inline uint32_t
 readType(const Wire& wire, size_t& begin, size_t& end)
 {
   uint64_t type = readVarNumber(wire, begin, end);
-  if (type > std::numeric_limits<uint32_t>::max())
-    {
-      BOOST_THROW_EXCEPTION(Error("TLV type code exceeds allowed maximum"));
-    }
+  if (type > std::numeric_limits<uint32_t>::max()) {
+    BOOST_THROW_EXCEPTION(Error("TLV type code exceeds allowed maximum"));
+  }
 
   return static_cast<uint32_t>(type);
 }

@@ -121,8 +121,8 @@ Encoder::appendBlock(const Block& block)
 size_t
 Encoder::prependBlock(const Block& block)
 {
-	size_t length = m_wire->prependBlock(block);
-	return length;
+  size_t length = m_wire->prependBlock(block);
+  return length;
 }
 
 }

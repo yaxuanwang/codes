@@ -45,11 +45,11 @@ public:
   class Error : public tlv::Error
   {
   public:
-	explicit 
-	Error(const std::string& what)
-	  : tlv::Error(what)
-	  {
-	  }
+    explicit 
+    Error(const std::string& what)
+      : tlv::Error(what)
+      {
+      }
   };
 
 public: // constructor
@@ -61,11 +61,12 @@ public: // constructor
    */
   explicit
   Block(const ConstBufferPtr& buffer);
+
   /** @brief Create a Block from a buffer, directly specifying boundaries
    *		   of the block within the buffer
    */
   Block(BufferPtr& buffer,
-		  const Buffer::const_iterator& begin, const Buffer::const_iterator& end);
+        const Buffer::const_iterator& begin, const Buffer::const_iterator& end);
 
   /** @brief Create a Block from an array with capacity @p length
    */

@@ -49,6 +49,7 @@ public:   // common interface between Encoder and Estimator
    * @brief Create instance of the encoder from an existing @p wire
    */
   Encodr(const Wire& wire);
+
   /**
    * @brief Append a byte
    */
@@ -74,11 +75,13 @@ public:   // common interface between Encoder and Estimator
    */
   size_t
   appendNonNegativeInteger(uint64_t integer);
+
   /**
    * @brief Append TLV block of type @p type and value from buffer @p array of size @p arraySize
    */
   size_t
   appendByteArrayBlock(uint32_t type, const uint8_t* array, size_t arraySize);
+
   /**
    * @brief Append TLV block @p block
    */
