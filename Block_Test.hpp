@@ -27,8 +27,7 @@
 #include "../common.hpp"
  
 #include "buffer.hpp"
-#include "tlv.hpp"
-//#include "tlv.hpp"
+#include "tlv_test.hpp"
 #include "encoding-buffer-fwd.hpp"
 
 namespace boost {
@@ -43,8 +42,7 @@ namespace ndn {
  */
 class BlockN
 {
-//public:	
-/*
+public:	
 class Error : public tlv::Error
   {
   public:
@@ -54,7 +52,6 @@ class Error : public tlv::Error
     {
     }
   };
-*/
 public: // constructor
   /** @brief Create an empty Block
    */
@@ -78,6 +75,8 @@ public: // constructor
   /** @brief Create a Block and allocate buffer with capacity @p capacity
    */
   BlockN(size_t capacity);
+
+  //To do: destructor here
 	
 public: //basic functions
   /** @brief Allocate a buffer and create a Block from the raw buffer with @p usedsize bytes used

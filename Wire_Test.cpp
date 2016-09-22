@@ -23,7 +23,7 @@
 
 #include "wire_test.hpp"
 #include "buffer-stream.hpp"
-#include "tlv.hpp"
+#include "tlv_test.hpp"
 
 namespace ndn {
 
@@ -283,7 +283,7 @@ Wire::reserve(size_t length)
 	
   if (remaining < length) {
     // if remaining space of this block is small, just finalize it and allocate a new one
-    // need to guarantee the remaining space is enough for T and L 
+    // need to guarantee the remaining space is enough at least for T and L 
     // specific number needs to be considered again
     if (remaining < 32 && m_current->next() == NULL) {
       expand(2048);
