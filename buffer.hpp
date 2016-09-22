@@ -71,12 +71,6 @@ public:
   {
   }
 
-  size_t
-  size()
-  {
-    return this->size();
-  }
-  
   /** @return pointer to the first byte of the buffer
    */
   uint8_t*
