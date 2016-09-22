@@ -29,6 +29,7 @@
 
 #include "buffer.hpp"
 #include "endian.hpp"
+#include "wire_test.hpp"
 
 namespace ndn {
 
@@ -42,7 +43,6 @@ const size_t MAX_NDN_PACKET_SIZE = 8800;
  * @brief Namespace defining NDN-TLV related constants and procedures
  */
 namespace tlv {
-
 /** @brief represents an error in TLV encoding or decoding
  *
  *  Element::Error SHOULD inherit from this Error class.
@@ -677,10 +677,10 @@ readVarNumber(const Wire& wire, size_t& begin, size_t& end, uint64_t& value)
 	
     if (count != 8)
       return false;
-  }
 
   return true;
 }
+
 
 inline uint64_t
 readVarNumber(const Wire& wire, size_t& begin, size_t& end)

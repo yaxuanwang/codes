@@ -23,18 +23,9 @@
 
 #include "wire_test.hpp"
 #include "buffer-stream.hpp"
+#include "tlv.hpp"
 
 namespace ndn {
-
-#if NDN_CXX_HAVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE
-static_assert(std::is_nothrow_move_constructible<Wire>::value,
-              "Wire must be MoveConstructible with noexcept");
-#endif // NDN_CXX_HAVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE
-
-#if NDN_CXX_HAVE_IS_NOTHROW_MOVE_ASSIGNABLE
-static_assert(std::is_nothrow_move_assignable<Wire>::value,
-              "Wire must be MoveAssignable with noexcept");
-#endif // NDN_CXX_HAVE_IS_NOTHROW_MOVE_ASSIGNABLE
 
 typedef shared_ptr<const Wire>              ConstWirePtr;
 typedef shared_ptr<Wire>                    WirePtr;
@@ -46,8 +37,8 @@ Wire::Wire()
 
 Wire::Wire(size_t capacity)
 {
-  Block block(capacity);
-  m_begin = block;
+  BlockN block(capacity);
+  m_begin = &block;
   m_end = m_begin;
   m_current = m_begin;
   m_capacity = capacity;
@@ -55,23 +46,23 @@ Wire::Wire(size_t capacity)
   m_count = 1;
 }
 
-Wire::Wire(const Block* block)
+Wire::Wire(BlockN* block)
   :m_begin(block),
   m_current(m_begin),
   m_end(m_begin),
-  m_capacity(block.m_capacity),
-  m_position(block.m_size)
+  m_capacity(block->capacity()),
+  m_position(block->size())
 {
   m_count = 1;
 }
 
 bool
-Wire::hasWire()
+Wire::hasWire() const
 {
   return static_cast<bool>(m_begin);
 }
 
-shared_ptr<Wire>
+Wire*
 Wire::copy()
 {
   if(hasWire()) {
@@ -83,7 +74,7 @@ Wire::copy()
 }
 
 size_t 
-Wire::position()
+Wire::position() const
 {
   if (!hasWire())
 	BOOST_THROW_EXCEPTION(Error("Wire is empty"));
@@ -92,7 +83,7 @@ Wire::position()
 }
 
 size_t 
-Wire::capacity()
+Wire::capacity() const
 {
   if (!hasWire())
 	BOOST_THROW_EXCEPTION(Error("Wire is empty"));
@@ -101,12 +92,12 @@ Wire::capacity()
 }
 
 size_t 
-Wire::size()
+Wire::size() const
 {
   if (!hasWire())
 	BOOST_THROW_EXCEPTION(Error("Wire is empty"));
 
-  return m_end.m_offset+ m_end.m_size;
+  return m_end->offset()+ m_end->size();
 }
 
 
@@ -123,9 +114,9 @@ Wire::setPositon(size_t position)
     } 
 	else {
       // we need to find the right buffer
-      Block *block = m_begin;
+      BlockN *block = m_begin;
       while (!block->inBlock(position)) {
-        block = block->m_next;
+        block = block->next();
       }
       m_current = block;
 	}
@@ -133,13 +124,13 @@ Wire::setPositon(size_t position)
   m_position = position;
 }
 
-Block*
-Wire::findPosition(Buffer::const_iterator& begin, size_t position)
+BlockN*
+Wire::findPosition(Buffer::const_iterator& begin, size_t position) const
 {
   if (!hasWire())
     BOOST_THROW_EXCEPTION(Error("Wire is empty"));
 
-  Block *block = m_begin;
+  BlockN *block = m_begin;
   if(position <= size()) {
 	// Is the new position within the current memory block?
     if (m_current->inBlock(position)) {
@@ -148,35 +139,44 @@ Wire::findPosition(Buffer::const_iterator& begin, size_t position)
 	else {
       // we need to find the right buffer
       while (!block->inBlock(position)) {
-        block = block->m_next;
+        block = block->next();
       }
     }
   }
-  size_t relativeOffset = position - block->m_offset;
-  begin = m_begin + relativeOffset;
+  size_t relativeOffset = position - block->offset();
+  begin = block->begin() + relativeOffset;
   return block;
 }
 
-void 
+uint32_t
+Wire::type() const
+{
+  return m_type;
+}
+
+size_t 
 Wire::setIovec()
 {
   size_t iovcnt = countBlock();
-	
-  Block *block = m_begin;
+  size_t totalSize = 0;
+
+  BlockN *block = m_begin;
   for (int i = 0; i < iovcnt; i++) {
-	m_iovec.push_back(block->m_buffer);
-    block = block->m_next;
+	totalSize += block->size();
+    m_iovec.push_back(block->getBuffer());
+    block = block->next();
   }
+  return totalSize;
 }
 
 size_t
 Wire::countBlock()
 {
   size_t count = 0;
-  Block *block = m_begin;
+  BlockN *block = m_begin;
   while (block) {
 	count++;
-	block = block->m_next;
+	block = block->next();
   }
   return count;
 }
@@ -195,24 +195,24 @@ Wire::finalize()
     } 
     else {
       // we need to find the right buffer
-      Block *block = m_begin;
+      BlockN *block = m_begin;
       while (!block->inBlock(position)) {
-        block = block->m_next;
+        block = block->next();
       }
       m_current = block;
     }
     // discard any memory blocks after this
-    Block *current = m_current->m_next;
+    BlockN *current = m_current->next();
     while (current) {
-      Block *next = current->m_next;
-      current->m_next = NULL;
+      BlockN *next = current->next();
+      current->setNextNull();
       current->deAllocate();     //still some problems here
       current = next;
     }
     // Set the limit of the current block so buffer->position is the end
-    m_current->m_next = NULL;
-    size_t setSize = m_position - m_current->m_begin;
-    m_current->m_size= setSize;
+    m_current->setNextNull();
+    size_t setSize = m_position - m_current->offset();
+    m_current->setSize(setSize);
     m_end = m_current;
   }
 }
@@ -229,10 +229,8 @@ Wire::getBufferFromIovec() //still some problems here
   if(!hasIovec())
   	BOOST_THROW_EXCEPTION(Error("The iovec is empty")); //if iovec is not constructed, it fails
   OBufferStream os;
-  size_t totalSize = 0;
   for (io_iterator i = m_iovec.begin(); i != m_iovec.end(); ++i) {
-    totalSize += i->size();
-	os.write(reinterpret_cast<const char*>(i), i->size());
+  os.write(reinterpret_cast<const char*>(i->begin()), i->size());
 }
   return os.buf();
 }
@@ -240,35 +238,35 @@ Wire::getBufferFromIovec() //still some problems here
 size_t
 Wire::remainingInCurrentBlock()
 {
-  size_t remaining = m_current->m_offset + m_current->m_capacity - m_position;
+  size_t remaining = m_current->offset() + m_current->capacity() - m_position;
   if(remaining < 0)
 	BOOST_THROW_EXCEPTION(Error("Position of current block gets wrong"));
   return remaining;
 }
 
 void
-Wire::expand(size_t allocationSize = 2048)
+Wire::expand(size_t allocationSize)
 {
-  Block b;
-  Block *block =b.allocate(allocationSize);
-  m_capacity += block->m_capacity;
-  block->m_begin = m_end->m_begin + m_end->m_size;
+  BlockN b;
+  BlockN *block =b.allocate(allocationSize);
+  m_capacity += block->capacity();
+  block->setBegin(m_end->begin() + m_end->size());
 	
-  m_end->next = block;
-  m_end->m_capacity= m_end->m_size;  //tailor the capacity of the last block into its current size
+  m_end->setNext(block);
+  m_end->setCapacity(m_end->size());  //tailor the capacity of the last block into its current size
   m_end = block;
 }
 
 void
 Wire::expandIfNeeded()
 {
-  if (m_position == m_current->m_offset+ m_current->m_capacity) {
-	if (m_current->m_next) {
-	  m_current = m_current->m_next;
+  if (m_position == m_current->offset()+ m_current->capacity()) {
+	if (m_current->next()) {
+	  m_current = m_current->next();
 	} 
 	else {
       //it's the end of the wire
-	  expand();
+	  expand(2048);
 	  m_current = m_end;
 	}
   }
@@ -281,14 +279,14 @@ Wire::reserve(size_t length)
    *the position to its size. Otherwise it is from the position to the end.
    */
   size_t remaining;
-  remaining = m_current->m_offset + m_current->m_capacity - m_position;
+  remaining = m_current->offset() + m_current->capacity() - m_position;
 	
   if (remaining < length) {
     // if remaining space of this block is small, just finalize it and allocate a new one
     // need to guarantee the remaining space is enough for T and L 
     // specific number needs to be considered again
-    if (remaining < 32 && m_current->m_next == NULL) {
-      expand();
+    if (remaining < 32 && m_current->next() == NULL) {
+      expand(2048);
       m_current = m_end;
       return;
     }
@@ -302,11 +300,11 @@ Wire::writeUint8(uint8_t value)
 {
   expandIfNeeded();
 	
-  size_t relativeOffset = m_position - m_current->m_offset;
-  auto iter = m_current->m_begin + relativeOffset + 1;
+  size_t relativeOffset = m_position - m_current->offset();
+  Buffer::const_iterator iter = m_current->begin() + relativeOffset + 1;
   *iter = value;
-  if (relativeOffset > m_current->m_size) {
-	m_current->m_size = relativeOffset;
+  if (relativeOffset > m_current->size()) {
+	m_current->setSize(relativeOffset);
   }
 
   m_position++;
@@ -323,7 +321,7 @@ Wire::writeUint16(uint16_t value)
   return 2;
 }
 
-void 
+size_t 
 Wire::writeUint32(uint32_t value)
 {
   reserve(4);
@@ -337,7 +335,7 @@ Wire::writeUint32(uint32_t value)
   return 4;
 }
 
-void 
+size_t 
 Wire::writeUint64(uint64_t value)
 {
   reserve(8);
@@ -367,14 +365,14 @@ Wire::appendArray(const uint8_t* array, size_t length)
         remaining = length - offset;
       }
 	
-      size_t relativeOffset = m_position - m_current->m_offset;
-      auto dest = m_current->m_begin + relativeOffset;
+      size_t relativeOffset = m_position - m_current->offset();
+      auto dest = m_current->begin() + relativeOffset;
       auto src = array + offset;     //notice !!
       std::copy(src, src + remaining, dest);
 	
 	  relativeOffset += remaining;
-	  if (relativeOffset > m_current->m_size) { 
-	    m_current->m_size = relativeOffset;
+	  if (relativeOffset > m_current->size()) { 
+	    m_current->setSize(relativeOffset);
 	  }
 	
 	  m_position += remaining;
@@ -385,35 +383,35 @@ Wire::appendArray(const uint8_t* array, size_t length)
 }
 
 size_t 
-Wire::appendBlock(const Block& block)
+Wire::appendBlock(BlockN* block)
 {
   finalize();
   // we assume that this is a single block (only when a block is put into a wire it will has next pointer)
-  if (!(block->m_next))
+  if (!(block->next()))
     BOOST_THROW_EXCEPTION(Error("block does not have next pointer until put into a wire"));
 
-  m_end->m_next = &block;
-  m_end = &block;
-  m_end->m_offset = m_position;
+  m_end->setNext(block);
+  m_end = block;
+  m_end->setOffset(m_position);
 
   m_current = m_end; 
-  m_position += m_end->m_size;
-  m_capacity += m_end->m_capacity;
+  m_position += m_end->size();
+  m_capacity += m_end->capacity();
 
-  return m_end->m_size;
+  return m_end->size();
 }
 
 
 uint8_t 
-Wire::readUint8(size_t position)
+Wire::readUint8(size_t position) const
 {
   if(m_capacity >position) {
-    Block *block = m_begin;
+    BlockN *block = m_begin;
     while(block && !block->inBlock(position)) {
-      block = block->m_next;
+      block = block->next();
     }
-    size_t relativeOffset = position - block->m_offset;
-    return *(block->m_begin + relativeOffset);
+    size_t relativeOffset = position - block->offset();
+    return *(block->begin() + relativeOffset);
   }
   else
     BOOST_THROW_EXCEPTION(Error("could not find the illegal position"));
@@ -424,11 +422,11 @@ Wire::getBuffer()
 {
   OBufferStream os;
   size_t totalSize = 0;
-  Block *block = m_begin;
+  BlockN *block = m_begin;
   while (block) {
   	totalSize += block->size();
     os.write(reinterpret_cast<const char*>(block->bufferValue()), block->size());
-    block = block->next;
+    block = block->next();
   }
   return os.buf();
 }
@@ -446,36 +444,36 @@ Wire::parse() const
     size_t element_begin = begin;
 	Buffer::const_iterator tmp_begin;
 	
-	uint32_t type = tlv::readType(this, begin, end);
-	uint64_t length = tlv::readVarNumber(this, begin, end);
+	uint32_t type = tlv::readType(*this, begin, end);
+	uint64_t length = tlv::readVarNumber(*this, begin, end);
 	
 	if (length > static_cast<uint64_t>(end - begin)) {
 	  m_subWires.clear();				//********************
 	  BOOST_THROW_EXCEPTION(tlv::Error("TLV length exceeds buffer length"));
-    }
+        }
 	size_t element_end = begin + length;
 	Buffer::const_iterator tmp_end;
-	Block* beginBlock = findPosition(tmp_begin, element_begin);
-	Block* endBlock = findPosition(tmp_end, element_end);
+	BlockN* beginBlock = findPosition(tmp_begin, element_begin);
+	BlockN* endBlock = findPosition(tmp_end, element_end);
 	//if subwire's begin and subwire's end are in the same block(underlying buffer is consecutive)
 	if (beginBlock = endBlock) {
-      Block* first = Block(beginBlock->m_buffer, tmp_begin, tmp_end);
+          BlockN* first = new BlockN(beginBlock->getBuffer(), tmp_begin, tmp_end);
 	  Wire wire = Wire(first);
 	  wire.m_type = type;
 	  m_subWires.push_back(wire); 
 	}
 	else {
-      Block* first = Block(beginBlock->m_buffer, tmp_begin, tmp_end);
-      Wire wire = Wire(first);
-      wire.m_type = type;
-	  Block* block= beginBlock->m_next;
+          BlockN* first = new BlockN(beginBlock->getBuffer(), tmp_begin, tmp_end);
+          Wire wire = Wire(first);
+          wire.m_type = type;
+	  BlockN* block= beginBlock->next();
 	  while(block != endBlock) { 
-	  	wire.appendBlock(Block(block->m_buffer, block->m_begin, block->m_end)); 
-		block = block->m_next;
+	  	wire.appendBlock(BlockN(block->getBuffer(), block->begin(), block->end())); 
+		block = block->next();
 	  }
-	  wire.appendBlock(Block(block->m_buffer, block->m_begin, tmp_end));
+	  wire.appendBlock(BlockN(block->getBuffer(), block->begin(), tmp_end()));
 	  m_subWires.push_back(wire);
-    }
+        }
 	begin = element_end;
 	// don't do recursive parsing, just the top level
   }
@@ -496,7 +494,7 @@ Wire::element_const_iterator
 Wire::find(uint32_t type) const  
 {
   return std::find_if(m_subWires.begin(), m_subWires.end(),
-                      [type] (const Block& subBlock) { return subBlock.type() == type; });
+                      [type] (const Wire& subWire) { return subWire.type() == type; });
 }
 
 const Wire::element_container&

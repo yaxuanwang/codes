@@ -22,7 +22,6 @@
  */
 
 #include "block_test.hpp"
-#include "tlv.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/asio/buffer.hpp>
@@ -30,33 +29,33 @@
 namespace ndn {
 
 #if NDN_CXX_HAVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE  //not to throw any exception.
-static_assert(std::is_nothrow_move_constructible<Block>::value,
+static_assert(std::is_nothrow_move_constructible<BlockN>::value,
               "Block must be MoveConstructible with noexcept");
 #endif // NDN_CXX_HAVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE
 
 #if NDN_CXX_HAVE_IS_NOTHROW_MOVE_ASSIGNABLE
-static_assert(std::is_nothrow_move_assignable<Block>::value,
+static_assert(std::is_nothrow_move_assignable<BlockN>::value,
               "Block must be MoveAssignable with noexcept");
 #endif // NDN_CXX_HAVE_IS_NOTHROW_MOVE_ASSIGNABLE
 
 const size_t MAX_SIZE_OF_BLOCK_FROM_STREAM = MAX_NDN_PACKET_SIZE; 
 
-Block::Block()   //create an empty Block 
+BlockN::BlockN()   //create an empty Block 
 {
 }
 
-Block::Block(const ConstBufferPtr& buffer) 
+BlockN::BlockN(const ConstBufferPtr& buffer) 
   : m_buffer(buffer)
   , m_begin(m_buffer->begin())
   , m_end(m_buffer->end())
   , m_capacity(m_end - m_begin)
 {
   m_next = NULL;
-  m_size = buffer.size();
+  m_size = buffer->size();
   m_offset = 0;
 }
 
-Block::Block(BufferPtr& buffer,   
+BlockN::BlockN(const ConstBufferPtr& buffer,
                const Buffer::const_iterator& begin, const Buffer::const_iterator& end)
   : m_buffer(buffer)
   , m_begin(begin)
@@ -64,11 +63,11 @@ Block::Block(BufferPtr& buffer,
   , m_capacity(m_end - m_begin)
 {
   m_next = NULL;
-  m_size = buffer.size();
+  m_size = buffer->size();
   m_offset = 0;
 }
 
-Block::Block(const uint8_t* array, size_t length) 
+BlockN::BlockN(const uint8_t* array, size_t length) 
 {
   m_buffer = make_shared<Buffer>(array, array+length);
   m_begin = m_buffer->begin();
@@ -78,9 +77,9 @@ Block::Block(const uint8_t* array, size_t length)
   m_next = NULL;
 }
 
-Block::Block(size_t capacity)
+BlockN::BlockN(size_t capacity)
 {
-  ConstBufferPtr buf = new Buffer(capacity);
+  shared_ptr<Buffer> buf = new Buffer(capacity);
   m_buffer = buf;
   m_begin = m_buffer->begin();
   m_end = m_buffer->end();
@@ -89,29 +88,29 @@ Block::Block(size_t capacity)
   m_next = NULL;
 }
 
-Block*
-Block::allocate(size_t capacity) 
+BlockN*
+BlockN::allocate(size_t capacity) 
 {
-  ConstBufferPtr buf = new Buffer(capacity);
-  Block block(buf);
+  shared_ptr<Buffer> buf = new Buffer(capacity);
+  BlockN block(buf);
 
-  return block;
+  return &block;
 }
 
 bool
-Block::hasBuffer() const
+BlockN::hasBuffer() const
 {
   return static_cast<bool>(m_buffer);
 }
 
 bool
-Block::empty() const
+BlockN::empty() const
 {
   return m_buffer && (m_size == 0);
 }
 
 void
-Block::reset()
+BlockN::reset()
 {
   m_buffer.reset(); // reset of the shared_ptr
   m_begin = m_end = Buffer::const_iterator();
@@ -120,7 +119,7 @@ Block::reset()
 }
 
 Buffer::const_iterator
-Block::begin() const
+BlockN::begin() const
 {
   if (!hasBuffer())
     BOOST_THROW_EXCEPTION(Error("Underlying buffer is empty"));
@@ -129,7 +128,7 @@ Block::begin() const
 }
 
 Buffer::const_iterator
-Block::end() const
+BlockN::end() const
 {
   if (!hasBuffer())
     BOOST_THROW_EXCEPTION(Error("Underlying buffer is empty"));
@@ -138,7 +137,7 @@ Block::end() const
 }
 
 const uint8_t*
-Block::bufferValue() const
+BlockN::bufferValue() const
 {
   if (!hasBuffer())
     BOOST_THROW_EXCEPTION(Error("Underlying buffer is empty"));
@@ -147,7 +146,7 @@ Block::bufferValue() const
 }
 
 size_t
-Block::capacity() const
+BlockN::capacity() const
 {
   if (hasBuffer()) {   
     return m_capacity;
@@ -157,7 +156,7 @@ Block::capacity() const
 }
 
 size_t
-Block::size() const
+BlockN::size() const
 {
   if (hasBuffer()) {   
     return m_size;
@@ -166,14 +165,72 @@ Block::size() const
     BOOST_THROW_EXCEPTION(Error("Block used size cannot be determined (undefined block used size)"));
 }
 
+size_t
+BlockN::offset() const
+{
+  if (hasBuffer()) {	 
+    return m_offset;
+  }
+  else
+    BOOST_THROW_EXCEPTION(Error("Block used size cannot be determined (undefined block used size)"));
+}
+
+BlockN*
+BlockN::next() const
+{
+  if (hasBuffer()) {	   
+    return m_next;
+  }
+  else
+    BOOST_THROW_EXCEPTION(Error("Block used size cannot be determined (undefined block used size)"));
+}
+
+void
+BlockN::setNextNull()
+{
+  m_next = NULL;
+}
+
+void
+BlockN::setNext(BlockN* block)
+{
+  m_next = block;
+}
+
+void
+BlockN::setSize(size_t size)
+{
+  m_size = size;
+}
+
+
+void
+BlockN::setCapacity(size_t capacity)
+{
+  m_capacity = capacity;
+}
+
+
+void
+BlockN::setOffset(size_t offset)
+{
+  m_offset = offset;
+}
+
+void
+BlockN::setBegin(Buffer::const_iterator newBegin)
+{
+  m_begin = newBegin;
+}
+
 shared_ptr<const Buffer>
-Block::getBuffer() const
+BlockN::getBuffer() const
 {
   return m_buffer;
 }
 
 bool
-Block::inBlock(size_t position)
+BlockN::inBlock(size_t position)
 {
   if (!hasBuffer())
 	BOOST_THROW_EXCEPTION(Error("underlying buffer is empty"));
@@ -182,20 +239,20 @@ Block::inBlock(size_t position)
 }
 
 void
-Block::deAllocate()
+BlockN::deAllocate()
 {
   //there are still some problems about memory
-  this.reset();
+  this->reset();
 }
 
 bool
-Block::operator!=(const Block& other) const
+BlockN::operator!=(const BlockN& other) const
 {
   return !this->operator==(other);
 }
 
 bool
-Block::operator==(const Block& other) const
+BlockN::operator==(const BlockN& other) const
 {
   return this->size() == other.size() &&
          std::equal(this->begin(), this->end(), other.begin());

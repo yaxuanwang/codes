@@ -87,15 +87,8 @@ public:   // common interface between Encoder and Estimator
    */
   size_t
   appendBlock(const Block& block);
-  
-  /**
-   * @brief Prepend TLV block @p block
-   */
-  size_t
-  prependBlock(const Block& block);
-  
+    
 private:
-  //shared_ptr<Wire> m_wire;
   Wire m_wire;
 
 public: // unique interface to the Encoder

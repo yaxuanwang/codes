@@ -24,10 +24,12 @@
 #ifndef NDN_ENCODING_BLOCK_TEST_HPP 
 #define NDN_ENCODING_BLOCK_TEST_HPP
  
-#include "common.hpp"
+#include "../common.hpp"
  
 #include "buffer.hpp"
-#include "tlv_test.hpp"
+#include "tlv.hpp"
+//#include "tlv.hpp"
+#include "encoding-buffer-fwd.hpp"
 
 namespace boost {
 namespace asio {
@@ -39,65 +41,54 @@ namespace ndn {
 
 /** @brief Class representing a single element to construct a buffer wire of TLV format
  */
-class Block
+class BlockN
 {
-public:	
-  class Error : public tlv::Error
+//public:	
+/*
+class Error : public tlv::Error
   {
   public:
-    explicit 
+    explicit
     Error(const std::string& what)
       : tlv::Error(what)
-      {
-      }
+    {
+    }
   };
-
+*/
 public: // constructor
   /** @brief Create an empty Block
    */
-  Block();
+  BlockN();
 
   /** @brief Create a Block from the raw buffer
    */
   explicit
-  Block(const ConstBufferPtr& buffer);
+  BlockN(const ConstBufferPtr& buffer);
 
   /** @brief Create a Block from a buffer, directly specifying boundaries
-   *		   of the block within the buffer
+   *  of the block within the buffer
    */
-  Block(BufferPtr& buffer,
-        const Buffer::const_iterator& begin, const Buffer::const_iterator& end);
+  BlockN(const ConstBufferPtr& buffer,
+          const Buffer::const_iterator& begin, const Buffer::const_iterator& end);
 
   /** @brief Create a Block from an array with capacity @p length
    */
-  Block(const uint8_t* array, size_t length);
+  BlockN(const uint8_t* array, size_t length);
 
   /** @brief Create a Block and allocate buffer with capacity @p capacity
    */
-  Block(size_t capacity);
-
-private:
-  shared_ptr<const Buffer> m_buffer;      //points to a segment of underlying memory
-  Block *m_next;                          //points to the next block in the wire
-
-  Buffer::const_iterator m_begin; 
-  Buffer::const_iterator m_end;
-	
-  size_t m_capacity;                      //maximum byte size of the buffer
-  size_t m_offset;                        //absolute offset in the wire
-  //uint32_t m_type;                      //type of this buffer
-  size_t m_size;                          //used byte size of the buffer
+  BlockN(size_t capacity);
 	
 public: //basic functions
   /** @brief Allocate a buffer and create a Block from the raw buffer with @p usedsize bytes used
    */
-  Block*
+  BlockN*
   allocate(size_t capacity);
 
   /** @brief Check if the Block is empty
    */
   bool
-  hasBuffer();
+  hasBuffer() const;
 
   /** @brief Check if the Buffer is empty
    */
@@ -124,6 +115,12 @@ public: //basic functions
   size_t
   size() const;
 
+  size_t
+  offset() const;
+
+  BlockN*
+  next() const;
+
   /** @brief Get underlying buffer
    */
   shared_ptr<const Buffer>
@@ -138,16 +135,48 @@ public: //basic functions
    */
   void
   deAllocate();
+
+  void
+  setNextNull();
+
+  void
+  setNext(BlockN* block);
+
+  void
+  setBegin(Buffer::const_iterator newBegin);
+
+  void
+  setSize(size_t size);
+
+  void
+  setOffset(size_t offset);
+
+  void
+  setCapacity(size_t capacity);
 	
 public: // EqualityComparable concept
   bool
-  operator==(const Block& other) const;
+  operator==(const BlockN& other) const;
 	
   bool
-  operator!=(const Block& other) const;
+  operator!=(const BlockN& other) const;
 	
 public: // ConvertibleToConstBuffer
   operator boost::asio::const_buffer() const;
 
+private:
+  shared_ptr<const Buffer> m_buffer;      //points to a segment of underlying memory
+  BlockN* m_next;                          //points to the next block in the wire
+
+  Buffer::const_iterator m_begin; 
+  Buffer::const_iterator m_end;
+	
+  size_t m_capacity;                      //maximum byte size of the buffer
+  size_t m_offset;                        //absolute offset in the wire
+  //uint32_t m_type;                      //type of this buffer
+  size_t m_size;                          //used byte size of the buffer
 };
 }
+
+#endif // NDN_ENCODING_BLOCK_TEST_HPP
+

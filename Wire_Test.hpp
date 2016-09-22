@@ -25,9 +25,8 @@
 #define NDN_ENCODING_WIRE_TEST_HPP
  
 #include "block_test.hpp"
-#include "common.hpp"
-
-
+#include "../common.hpp"
+     
 namespace boost {
 namespace asio {
 class const_buffer;
@@ -40,23 +39,13 @@ namespace ndn {
 class Wire
 {
 public:
-  typedef std::vector<shared_ptr<Buffer>>     io_container;
+  typedef std::vector<shared_ptr<const Buffer>>     io_container;
   typedef io_container::iterator              io_iterator;
   typedef io_container::const_iterator        io_const_iterator;
 	
   typedef std::vector<Wire>                   element_container;
   typedef element_container::iterator         element_iterator;
   typedef element_container::const_iterator   element_const_iterator;
-
-  class Error : public tlv::Error
-  {
-  public:
-	explicit 
-	Error(const std::string& what)
-	  : tlv::Error(what)
-    {
-    }
-  };
 
 public://constructor
   /** @brief Create an empty wire
@@ -69,51 +58,39 @@ public://constructor
 	
   /** @brief Create a wire with the fisrt block @p block
    */
-  Wire(const Block *block);
+  Wire(BlockN* block);
 
   /** @brief Create a wire with the fisrt block whose buffer is @p buffer
    *  @param begin the begin of data in this buffer
    *  @param begin the end of data in this buffer
    */
   Wire(BufferPtr& buffer, Buffer::const_iterator begin, Buffer::const_iterator end);
-	
-private:
-  size_t m_position;               //absolute offset in this wire
-  size_t m_capacity;               //total maximum byte size of this wire
-
-  Block *m_begin;                  //first block
-  Block *m_current;                //current block
-  Block *m_end;                    //the last block
-  mutable io_container m_iovec;    //buffer sequence
-  size_t m_count;                  //reference time 
-  uint32_t m_type;                 //type of this wire
-  mutable element_container m_subWires;
-	
+  
 public: //wire
   /** @brief Check if the Wire is empty
    */
   bool
-  hasWire();
+  hasWire() const;
 	
   /** @brief Increase a reference to current wire
    */
-  shared_ptr<Wire>
+  Wire*
   copy();
 	
   /** @brief Return current offset in this wire
    */
   size_t 
-  position();
+  position() const;
 	
   /** @brief Return current capacity of this wire
    */
   size_t 
-  capacity();
+  capacity() const;
 	
   /** @brief Return current used byte size of this wire
    */
   size_t 
-  size();
+  size() const;
 	
   /** @brief Set the offset to a specific positon
    */
@@ -123,14 +100,18 @@ public: //wire
   /** @brief Find the block and buffer which @p position offset lies, set the iterator to this position
    *  Return the pointer to this block
    */
-  Block*
-  findPosition(Buffer::const_iterator& begin, size_t position);
+  BlockN*
+  findPosition(Buffer::const_iterator& begin, size_t position) const;
+
+  uint32_t
+  type() const;
 		
 public: //iovec
   /** @brief put buffers pointed by blocks into a buffer sequence iovec
    *  All buffers in blocks in this wire will not be copied or modified. The iovec is read-only for doing a gathering write.
+   *  Return total byte size
    */
-  void 
+  size_t 
   setIovec();
 	
   /** @brief count the number of blocks in this wire
@@ -163,7 +144,7 @@ public: //operate the wire
    *  Defualt size is 2048
    */
   void
-  expand(size_t allocationSize = 2048);
+  expand(size_t allocationSize);
 	
   /** @brief Expand the wire when current capacity is not enough  
    */
@@ -207,13 +188,13 @@ public: //operate the wire
    *  Return the size of the appended block
    */
   size_t 
-  appendBlock(const Block& block);
+  appendBlock(BlockN* block);
 	
   /** @brief Insert a block to the current position 
    *  This will throw data in current block after current position
    */
   size_t 
-  insertBlock(const Block* block); //complicated 
+  insertBlock(const BlockN* block); //complicated 
 
   /** @brief Append a wire @p wire to the current position (not decided yet)
    *  This function will combine two wire together into a longer one
@@ -224,7 +205,7 @@ public: //operate the wire
   /** @brief read the `uint8_t` in @p position position 
    */
   uint8_t 
-  readUint8(size_t position);
+  readUint8(size_t position) const;
 
   /** @brief From logical continuous wire create a physical continuous memory buffer
    *  Return the shared pointer of this underlying buffer
@@ -265,9 +246,21 @@ public: //subwires
 
   size_t
   elements_size() const;
-		
+
+private:
+  size_t m_position;               //absolute offset in this wire
+  size_t m_capacity;               //total maximum byte size of this wire
+
+  BlockN* m_begin;                  //first block
+  BlockN* m_current;                //current block
+  BlockN* m_end;                    //the last block
+  io_container m_iovec;            //buffer sequence
+  size_t m_count;                  //reference time(not decided yet) 
+  uint32_t m_type;                 //type of this wire
+  mutable element_container m_subWires;
+
 };
 }        
 
-
+#endif // NDN_ENCODING_WIRE_TEST_HPP
 

@@ -114,14 +114,7 @@ Encoder::appendByteArrayBlock(uint32_t type, const uint8_t* array, size_t arrayS
 size_t
 Encoder::appendBlock(const Block& block)
 {
-  size_t length = m_wire->appendBlock(block);
-  return length;
-}
-
-size_t
-Encoder::prependBlock(const Block& block)
-{
-  size_t length = m_wire->prependBlock(block);
+  size_t length = m_wire.appendBlock(block);
   return length;
 }
 
